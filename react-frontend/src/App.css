@@ -1,0 +1,79 @@
+/* Global CSS Variables for Nova's Unique Visual Identity */
+:root {
+  /* Nova's Core Colors */
+  --nova-primary-color: #6c47d7;
+  /* Sophisticated Purple-Blue */
+  --nova-secondary-color: #2cb67d;
+  /* Serene Teal-Green for accents */
+
+  /* Neutral Palette - Light Mode */
+  --nova-background-light: #F5F7FA;
+  /* Very soft light blue-grey for main app background */
+  --nova-surface-light: #FFFFFF;
+  /* Clean white for card-like elements (e.g., header, sidebar, main content area) */
+
+  /* Text Colors */
+  --nova-text-dark: #232C33;
+  /* Soft dark charcoal for primary text */
+  --nova-text-medium: #6B7280;
+  /* Mid-grey for secondary text, labels */
+  --nova-text-light: #A0AEC0;
+  /* Light grey for subtle helper text, disabled states */
+
+  /* Borders & Dividers */
+  --nova-border-light: #E2E8F0;
+  /* Very light grey for subtle separation */
+
+  /* Rounded Corners */
+  --nova-border-radius-large: 16px;
+  /* For larger structural elements (e.g., main panels) */
+  --nova-border-radius-medium: 12px;
+  /* For common elements like inputs, buttons, tabs */
+  --nova-border-radius-small: 8px;
+  /* For smaller interactive elements, icons */
+
+  /* Shadows for Depth (Soft & Minimal) */
+  --nova-shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.05);
+  /* Lighter, diffused shadow */
+  --nova-shadow-medium: 0 8px 20px rgba(0, 0, 0, 0.08);
+  /* Slightly more pronounced shadow */
+}
+
+/* Basic Body Styling (unchanged from last time, but included for completeness) */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  /* System default fonts for a clean look */
+  -webkit-font-smoothing: antialiased;
+  /* Better font rendering on macOS */
+  -moz-osx-font-smoothing: grayscale;
+  /* Better font rendering on macOS */
+  background-color: var(--nova-background-light);
+  /* Apply the new global background color */
+  color: var(--nova-text-dark);
+  /* Apply the new default text color */
+  overflow: hidden;
+  /* Prevent default browser scrollbars for the main app container */
+  height: 100vh;
+  /* Ensure the body takes full viewport height */
+  width: 100vw;
+  /* Ensure the body takes full viewport width */
+}
+
+/* Main Browser Container Layout (unchanged from last time, but included for completeness) */
+.nova-browser-container {
+  display: flex;
+  /* Use flexbox for the main layout */
+  flex-direction: column;
+  /* Stack children vertically (header on top, then main content area) */
+  height: 100vh;
+  /* Make the container fill the entire viewport height */
+  width: 100vw;
+  /* Make the container fill the entire viewport width */
+  overflow: hidden;
+  /* Crucial: ensures internal scrolling handles content, not the main app window */
+  background-color: var(--nova-background-light);
+  /* Redundant but good for clarity */
+}

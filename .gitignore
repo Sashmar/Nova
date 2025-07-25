@@ -1,0 +1,14 @@
+# Node modules
+node_modules/
+react-frontend/node_modules/
+npm-debug.log
+.env.local
+.env*.local
+
+# Electron files
+*.asar
+dist/
+out/ # Electron Builder output directory
+
+# React build outputs (these are generated files)
+/react-frontend/build/
