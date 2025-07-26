@@ -1,0 +1,48 @@
+.main-content {
+    flex-grow: 1;
+    background-color: var(--nova-surface-light);
+    /* The white background that will show through for rounded corners */
+    /* REMOVED: padding: 24px; */
+    /* <--- This line is removed! */
+    overflow: hidden;
+    /* This is CRUCIAL for clipping the BrowserView's corners */
+    overflow-y: auto;
+    /* Re-enable vertical scrollbar if content overflows vertically */
+
+    box-shadow: var(--nova-shadow-soft);
+
+    border-radius: var(--nova-border-radius-large);
+    /* Applied to all four corners */
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+
+    height: 100%;
+    min-height: 0;
+    position: relative;
+    /* Added for potential future absolute positioning of elements inside */
+}
+
+/* Important: Ensure the welcome message itself still has some internal padding so it's not squished */
+.main-content h1 {
+    color: var(--nova-primary-color);
+    font-size: 2.2em;
+    margin: 0;
+    padding-top: 50px;
+    /* Example: Add top padding just for the welcome message */
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+.main-content p {
+    font-size: 1.1em;
+    line-height: 1.6;
+    color: var(--nova-text-medium);
+    padding-bottom: 50px;
+    /* Example: Add bottom padding just for the welcome message */
+    padding-left: 24px;
+    padding-right: 24px;
+}

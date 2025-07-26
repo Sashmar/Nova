@@ -1,0 +1,41 @@
+.chatbot-sidebar {
+    width: 300px;
+    /* Give the sidebar a fixed width */
+    background-color: var(--nova-surface-light);
+    /* White background for the sidebar */
+    flex-shrink: 0;
+    /* Prevent the sidebar from shrinking */
+    height: 100%;
+    /* Make it fill the height of the main content area */
+    padding: 20px;
+    /* Internal spacing */
+    box-shadow: var(--nova-shadow-soft);
+    /* Apply a soft shadow */
+
+    /* Apply large rounded corners to the right side */
+    border-top-right-radius: var(--nova-border-radius-large);
+    border-bottom-right-radius: var(--nova-border-radius-large);
+
+    /* Flexbox to arrange content vertically and center it */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Center content horizontally */
+    text-align: center;
+    /* Center text */
+}
+
+.chatbot-sidebar h2 {
+    color: var(--nova-primary-color);
+    /* Use Nova's signature purple-blue for the heading */
+    font-size: 1.5em;
+    /* Heading size */
+    margin-bottom: 20px;
+    /* Space below heading */
+}
+
+.chatbot-placeholder p {
+    color: var(--nova-text-medium);
+    /* Medium grey for placeholder text */
+    font-size: 0.9em;
+}

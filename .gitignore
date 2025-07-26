@@ -12,3 +12,6 @@ out/ # Electron Builder output directory
 
 # React build outputs (these are generated files)
 /react-frontend/build/
+
+# Log files
+*.log

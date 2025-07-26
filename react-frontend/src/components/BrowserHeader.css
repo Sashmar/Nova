@@ -1,0 +1,102 @@
+.browser-header {
+    background-color: var(--nova-surface-light);
+    padding: 15px 20px;
+    box-shadow: var(--nova-shadow-soft);
+    z-index: 10;
+    border-bottom-left-radius: var(--nova-border-radius-large);
+    border-bottom-right-radius: var(--nova-border-radius-large);
+
+    /* Use flexbox to arrange items horizontally: nav buttons, address bar, tabs placeholder */
+    display: flex;
+    align-items: center;
+    /* Vertically align all items in the middle */
+    gap: 15px;
+    /* Space between the major sections (nav-buttons, address-bar, tabs) */
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 8px;
+    /* Space between individual nav buttons */
+    flex-shrink: 0;
+    /* Prevent buttons from shrinking if space is tight */
+}
+
+.nav-button {
+    background-color: var(--nova-background-light);
+    border: none;
+    border-radius: var(--nova-border-radius-medium);
+    padding: 8px 12px;
+    font-size: 1.2em;
+    /* Size of the icon */
+    cursor: pointer;
+    color: var(--nova-text-dark);
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    display: flex;
+    /* Ensure icon is centered */
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-button:hover {
+    background-color: var(--nova-border-light);
+    transform: translateY(-1px);
+}
+
+.nav-button:active {
+    transform: translateY(0);
+}
+
+/* Address Bar Styles */
+.address-bar-container {
+    flex-grow: 1;
+    /* Allow the address bar to take up most of the available horizontal space */
+    display: flex;
+    /* Use flex to ensure the input fills its container */
+}
+
+.address-bar {
+    width: 100%;
+    /* Make input fill its container */
+    padding: 10px 15px;
+    /* Internal spacing */
+    border: 1px solid var(--nova-border-light);
+    /* Light border */
+    border-radius: var(--nova-border-radius-medium);
+    /* Apply medium rounded corners */
+    font-size: 1.05em;
+    /* Slightly larger text for readability */
+    outline: none;
+    /* Remove default blue outline on focus */
+    background-color: var(--nova-background-light);
+    /* Light grey background for input field */
+    color: var(--nova-text-dark);
+    /* Dark text color */
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    /* Smooth transition for focus effect */
+}
+
+.address-bar::placeholder {
+    color: var(--nova-text-light);
+    /* Lighter color for placeholder text */
+}
+
+.address-bar:focus {
+    border-color: var(--nova-primary-color);
+    /* Primary color border on focus */
+    box-shadow: 0 0 0 3px rgba(108, 71, 215, 0.2);
+    /* Soft purple glow on focus (using rgba for transparency) */
+}
+
+/* Styles for the tabs placeholder - will be removed later */
+.tabs-placeholder {
+    background-color: var(--nova-background-light);
+    border-radius: var(--nova-border-radius-medium);
+    padding: 8px 15px;
+    color: var(--nova-text-medium);
+    font-size: 0.9em;
+    flex-shrink: 0;
+    /* Prevent tabs placeholder from shrinking */
+    white-space: nowrap;
+    /* Keep text on one line */
+}
