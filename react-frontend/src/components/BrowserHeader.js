@@ -31,16 +31,49 @@ function BrowserHeader() {
         }
     };
 
+    const handleGoBack = () => {
+        if (window.electron && window.electron.goBack) {
+            window.electron.goBack();
+            console.log('Requesting navigation back.'); // Console log for debugging
+        } else {
+            console.error('window.electron.goBack is not defined. Preload script issue?');
+        }
+    };
+
+    const handleGoForward = () => {
+        if (window.electron && window.electron.goForward) {
+            window.electron.goForward();
+            console.log('Requesting navigation forward.'); // Console log for debugging
+        } else {
+            console.error('window.electron.goForward is not defined. Preload script issue?');
+        }
+    };
+
+    const handleReload = () => {
+        if (window.electron && window.electron.reload) {
+            window.electron.reload();
+            console.log('Requesting page reload.'); // Console log for debugging
+        } else {
+            console.error('window.electron.reload is not defined. Preload script issue?');
+        }
+    };
+
+    // NEW: Function to select all text when address bar is focused/clicked
+    const handleAddressBarFocus = (event) => {
+        event.target.select(); // Selects all text in the input field
+    };
+
+
     return (
         <header className="browser-header">
             <div className="nav-buttons">
-                <button className="nav-button">
+                <button className="nav-button" onClick={handleGoBack}>
                     <IoIosArrowBack /> {/* Back Arrow Icon */}
                 </button>
-                <button className="nav-button">
+                <button className="nav-button" onClick={handleGoForward}>
                     <IoIosArrowForward /> {/* Forward Arrow Icon */}
                 </button>
-                <button className="nav-button">
+                <button className="nav-button" onClick={handleReload}>
                     <IoMdRefresh /> {/* Refresh Icon */}
                 </button>
             </div>
@@ -53,6 +86,7 @@ function BrowserHeader() {
                     placeholder="Search or type URL..."
                     defaultValue="https://nova.browser.com" // Default to a valid URL for testing
                     onKeyDown={handleAddressBarKeyDown} // Attach the keydown event listener
+                    onFocus={handleAddressBarFocus}
                 />
             </div>
 

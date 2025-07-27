@@ -112,6 +112,33 @@ function createWindow() {
         currentBrowserView.webContents.openDevTools();
     });
 
+    ipcMain.on('navigate-back', () => {
+        if (currentBrowserView && currentBrowserView.webContents.canGoBack()) {
+            currentBrowserView.webContents.goBack();
+            console.log('Navigating back.');
+        } else {
+            console.log('Cannot go back: No BrowserView or no history.');
+        }
+    });
+
+    ipcMain.on('navigate-forward', () => {
+        if (currentBrowserView && currentBrowserView.webContents.canGoForward()) {
+            currentBrowserView.webContents.goForward();
+            console.log('Navigating forward.');
+        } else {
+            console.log('Cannot go forward: No BrowserView or no future history.');
+        }
+    });
+
+    ipcMain.on('navigate-reload', () => {
+        if (currentBrowserView) {
+            currentBrowserView.webContents.reload();
+            console.log('Reloading page.');
+        } else {
+            console.log('Cannot reload: No BrowserView present.');
+        }
+    });
+
     // Listen for main window resize events
     // MainContent.js already sends its bounds on resize, so setBrowserViewBounds
     // will be called via 'set-webview-bounds' listener. No direct action here.
