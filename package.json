@@ -12,5 +12,8 @@
   "description": "",
   "devDependencies": {
     "electron": "^37.2.4"
+  },
+  "dependencies": {
+    "uuid": "^11.1.0"
   }
 }

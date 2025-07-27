@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './BrowserHeader.css';
 import { IoIosArrowBack, IoIosArrowForward, IoMdRefresh } from 'react-icons/io';
 
@@ -58,10 +58,78 @@ function BrowserHeader() {
         }
     };
 
+    const handleNewTabClick = () => {
+        if (window.electron && window.electron.createNewTab) {
+            // Tell Electron to create a new tab, loading a default page
+            window.electron.createNewTab('https://nova.browser.com'); // Or 'about:blank' for a truly blank page
+            console.log('BrowserHeader: Requesting new tab.');
+        } else {
+            console.error('window.electron.createNewTab is not defined. Preload script issue?');
+        }
+    };
+
     // NEW: Function to select all text when address bar is focused/clicked
     const handleAddressBarFocus = (event) => {
         event.target.select(); // Selects all text in the input field
     };
+
+    const handleTabClick = (id) => {
+        if (window.electron && window.electron.switchTab) {
+            window.electron.switchTab(id); // Tell Electron to activate this tab ID
+            console.log('BrowserHeader: Requesting tab switch to:', id);
+        } else {
+            console.error('window.electron.switchTab is not defined. Preload script issue?');
+        }
+    };
+
+    const [tabsState, setTabsState] = useState([]); // State to hold the array of tab objects
+    const [activeTabIdState, setActiveTabIdState] = useState(null); // State to hold the ID of the active tab
+    // --- END NEW REACT STATE ---
+
+    // --- NEW useEffect FOR TAB DATA FETCHING & LISTENING - ADD THIS useEffect BLOCK HERE ---
+    useEffect(() => {
+        // Function to fetch initial tabs data from Electron
+        const fetchInitialTabs = async () => {
+            if (window.electron && window.electron.getTabs) {
+                const initialTabs = await window.electron.getTabs();
+                setTabsState(initialTabs);
+                const currentActive = initialTabs.find(tab => tab.isActive);
+                if (currentActive) {
+                    setActiveTabIdState(currentActive.id);
+                }
+                console.log('BrowserHeader: Fetched initial tabs:', initialTabs);
+            }
+        };
+
+        // Function to handle updates from Electron when tabs change
+        const handleTabsUpdated = (tabsData) => {
+            setTabsState(tabsData);
+            const currentActive = tabsData.find(tab => tab.isActive);
+            if (currentActive) {
+                setActiveTabIdState(currentActive.id);
+            }
+            console.log('BrowserHeader: Tabs updated from main process:', tabsData);
+        };
+
+        fetchInitialTabs(); // Call on component mount to get initial tabs
+
+        // Subscribe to tabs updates from Electron
+        if (window.electron && window.electron.onTabsUpdated) {
+            window.electron.onTabsUpdated(handleTabsUpdated);
+        }
+
+        // Cleanup function: Unsubscribe from the event when the component unmounts
+        return () => {
+            if (window.electron && window.electron.onTabsUpdated) {
+                // Note: Electron's ipcRenderer.removeListener can be complex with named functions,
+                // For simplicity, we assume this component persists. For dynamic components, proper unsubscribe is needed.
+                // For now, this line is a placeholder for proper cleanup in a more complex app.
+                // ipcRenderer.removeListener('tabs-updated', handleTabsUpdated);
+            }
+        };
+    }, []);
+
+
 
 
     return (
@@ -90,9 +158,21 @@ function BrowserHeader() {
                 />
             </div>
 
-            {/* Placeholder for Tabs - will add later */}
-            <div className="tabs-placeholder">
-                <p>Tabs Placeholder</p>
+            {/* Tabs Container */}
+            <div className="tabs-container">
+                {tabsState.map(tab => (
+                    <div
+                        key={tab.id}
+                        // MODIFIED LINE: Ensure active-tab class is applied and onClick is set
+                        className={`tab ${tab.id === activeTabIdState ? 'active-tab' : ''}`}
+                        onClick={() => handleTabClick(tab.id)} // This connects the click to the function
+                    >
+                        {tab.title}
+                    </div>
+                ))}
+                <div className="tab new-tab-button" onClick={handleNewTabClick}>
+                    + {/* Placeholder for New Tab Button */}
+                </div>
             </div>
         </header>
     );

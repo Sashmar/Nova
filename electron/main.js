@@ -1,9 +1,11 @@
 const { app, BrowserWindow, ipcMain, BrowserView } = require('electron');
 const path = require('path');
-
+const { v4: uuidv4 } = require('uuid');
 let mainWindow;
 let currentBrowserView = null; // To hold our single BrowserView for now
 let lastKnownBounds = null; // Store the last precise bounds received from React
+let tabs = [];
+let activeTabId = null; // Track the currently active tab
 
 // Helper function to set BrowserView bounds using the PRECISE bounds from React
 function setBrowserViewBounds(bounds) {
@@ -38,6 +40,99 @@ function setBrowserViewBounds(bounds) {
     console.log('BrowserView bounds set to:', currentBrowserView.getBounds());
 }
 
+function createAndActivateTab(url = 'https://nova.browser.com') { // Default to Nova's start page
+    console.log('main.js: Creating and activating new tab for URL:', url);
+
+    // Remove the previously active BrowserView from the window, if it exists
+    if (currentBrowserView) {
+        mainWindow.removeBrowserView(currentBrowserView);
+    }
+
+    // --- Tab and BrowserView Creation Logic (Refactored from load-url) ---
+    const newTabId = uuidv4();
+    const newBrowserView = new BrowserView({
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+        }
+    });
+
+    const newTab = {
+        id: newTabId,
+        url: url,
+        title: url, // Initial title
+        browserView: newBrowserView,
+        isActive: true
+    };
+
+    tabs.forEach(tab => tab.isActive = false);
+    tabs.push(newTab);
+    activeTabId = newTabId;
+    currentBrowserView = newBrowserView;
+
+    mainWindow.setBrowserView(currentBrowserView);
+    currentBrowserView.webContents.loadURL(url);
+
+    // --- Event Listeners for the NEW BrowserView (Copied from load-url, now reusable) ---
+    currentBrowserView.webContents.on('did-finish-load', () => {
+        console.log('main.js: BrowserView did-finish-load event fired for tab:', newTab.id);
+        if (lastKnownBounds) {
+            setBrowserViewBounds(lastKnownBounds);
+        } else {
+            console.warn('main.js: did-finish-load, but no lastKnownBounds. Visual alignment may be delayed. Try resizing window slightly.');
+            const { width, height } = mainWindow.getBounds();
+            setBrowserViewBounds({ x: 0, y: 0, width: width, height: height });
+        }
+        // Update tab title after page loads
+        const loadedTab = tabs.find(tab => tab.id === newTab.id);
+        if (loadedTab) {
+            loadedTab.title = currentBrowserView.webContents.getTitle();
+            loadedTab.url = currentBrowserView.webContents.getURL();
+            sendTabsToRenderer(); // Send updated tabs list
+            console.log(`main.js: Tab title updated (did-finish-load) for ${loadedTab.id}: ${loadedTab.title}`);
+        }
+    });
+
+    currentBrowserView.webContents.on('page-title-updated', (event, title) => {
+        const updatedTab = tabs.find(tab => tab.id === newTab.id);
+        if (updatedTab) {
+            updatedTab.title = title;
+            updatedTab.url = currentBrowserView.webContents.getURL();
+            sendTabsToRenderer();
+            console.log(`main.js: Page title updated for ${updatedTab.id}: ${updatedTab.title}`);
+        }
+    });
+
+    currentBrowserView.webContents.openDevTools();
+    // --- End Event Listeners for BrowserView ---
+
+    sendTabsToRenderer(); // Inform renderer about the new active tab
+}
+
+function sendTabsToRenderer() {
+    if (mainWindow && mainWindow.webContents) {
+        // Send the current list of tabs to the renderer process
+        mainWindow.webContents.send('tabs-updated', tabs.map(tab => ({
+            id: tab.id,
+            url: tab.url,
+            title: tab.title,
+            isActive: tab.isActive
+        })));
+        console.log('Tabs data sent to renderer:', tabs.length, 'tabs');
+    }
+}
+
+// Handler for when the renderer requests the current list of tabs
+ipcMain.handle('get-tabs', async () => {
+    console.log('Renderer requested tabs data.');
+    return tabs.map(tab => ({
+        id: tab.id,
+        url: tab.url,
+        title: tab.title,
+        isActive: tab.isActive
+    }));
+});
+
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -55,6 +150,8 @@ function createWindow() {
         frame: true
     });
 
+
+
     // --- IPC Main Listeners (These must be inside createWindow because they rely on mainWindow) ---
 
     // Listener 1: Receive precise bounds from React's MainContent.js
@@ -71,45 +168,13 @@ function createWindow() {
 
     // Listener 2: When a URL is requested from the Address Bar
     ipcMain.on('load-url', (event, url) => {
-        console.log('load-url received:', url);
+        console.log('load-url received:', url); // KEEP THIS LINE, it was part of previous block
+        createAndActivateTab(url); // This is the new line
+    });
 
-        // Clean up previous BrowserView if it exists
-        if (currentBrowserView) {
-            mainWindow.removeBrowserView(currentBrowserView);
-            currentBrowserView = null;
-        }
-
-        // Create a new BrowserView for the requested URL
-        currentBrowserView = new BrowserView({
-            webPreferences: {
-                nodeIntegration: false,
-                contextIsolation: true,
-            }
-        });
-
-        // Attach the new BrowserView to the main window
-        mainWindow.setBrowserView(currentBrowserView);
-
-        // Load the requested URL in the BrowserView
-        currentBrowserView.webContents.loadURL(url);
-
-        // --- Fix for DevTools dependency (positioning after load) ---
-        // Position BrowserView ONLY after its content has finished loading
-        currentBrowserView.webContents.on('did-finish-load', () => {
-            console.log('main.js: BrowserView did-finish-load event fired.');
-            if (lastKnownBounds) { // Use the most recently received bounds from React
-                setBrowserViewBounds(lastKnownBounds);
-            } else {
-                console.warn('main.js: did-finish-load, but no lastKnownBounds. Visual alignment may be delayed. Try resizing window.');
-                // Fallback: If for some reason lastKnownBounds is still null, try to get current main window bounds
-                // This is a less precise fallback, but better than nothing.
-                const { width, height } = mainWindow.getBounds(); // Get dimensions directly here for fallback
-                setBrowserViewBounds({ x: 0, y: 0, width: width, height: height }); // Rough full-window bounds as fallback
-            }
-        });
-
-        // Open DevTools for the BrowserView (for inspecting loaded websites)
-        currentBrowserView.webContents.openDevTools();
+    ipcMain.on('create-new-tab', (event, url = 'https://nova.browser.com') => { // Default URL for new tab
+        console.log('create-new-tab received: Requesting blank tab for URL:', url);
+        createAndActivateTab(url); // Reuse our helper to create and load the new tab
     });
 
     ipcMain.on('navigate-back', () => {
@@ -139,6 +204,46 @@ function createWindow() {
         }
     });
 
+    ipcMain.on('switch-tab', (event, idToSwitchTo) => {
+        console.log('main.js: Request to switch to tab ID:', idToSwitchTo);
+
+        // Find the tab to activate
+        const targetTab = tabs.find(tab => tab.id === idToSwitchTo);
+
+        if (targetTab && !targetTab.isActive) { // Check if tab exists and is not already active
+            // 1. Remove currently active BrowserView (if any)
+            if (currentBrowserView) {
+                mainWindow.removeBrowserView(currentBrowserView);
+            }
+
+            // 2. Update active status in tabs array
+            tabs.forEach(tab => tab.isActive = false); // Deactivate all
+            targetTab.isActive = true; // Activate target tab
+
+            // 3. Update global references
+            activeTabId = targetTab.id;
+            currentBrowserView = targetTab.browserView;
+
+            // 4. Attach the new active BrowserView
+            mainWindow.setBrowserView(currentBrowserView);
+
+            // 5. Re-position the BrowserView using last known bounds
+            if (lastKnownBounds) {
+                setBrowserViewBounds(lastKnownBounds);
+            } else {
+                console.warn('switch-tab: No lastKnownBounds. BrowserView might not be positioned perfectly.');
+            }
+
+            // 6. Inform renderer that tabs have updated (visual change in active tab)
+            sendTabsToRenderer();
+            console.log('main.js: Switched to tab ID:', idToSwitchTo);
+        } else if (targetTab && targetTab.isActive) {
+            console.log('main.js: Tab is already active:', idToSwitchTo);
+        } else {
+            console.warn('main.js: Attempted to switch to non-existent tab:', idToSwitchTo);
+        }
+    });
+
     // Listen for main window resize events
     // MainContent.js already sends its bounds on resize, so setBrowserViewBounds
     // will be called via 'set-webview-bounds' listener. No direct action here.
@@ -158,6 +263,8 @@ function createWindow() {
 
     // Open the DevTools for the main window (your React UI)
     mainWindow.webContents.openDevTools();
+
+    sendTabsToRenderer();
 } // CORRECT CLOSING BRACE FOR createWindow()
 
 

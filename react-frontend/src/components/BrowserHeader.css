@@ -100,3 +100,100 @@
     white-space: nowrap;
     /* Keep text on one line */
 }
+
+.tabs-container {
+    display: flex;
+    /* Arrange tabs horizontally */
+    align-items: center;
+    /* Vertically align items in the tab bar */
+    gap: 5px;
+    /* Small space between individual tabs */
+    padding: 5px 0;
+    /* Vertical padding around the tab row */
+    overflow-x: auto;
+    /* Allow horizontal scrolling if many tabs */
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scrolling on touch devices */
+    flex-shrink: 0;
+    /* Prevent the tab bar from shrinking */
+    max-width: 350px;
+    /* Limit the max width of the tab container to prevent it from overlapping address bar too much */
+    white-space: nowrap;
+    /* Keep tabs on one line */
+
+    /* Style for scrollbar in webkit browsers (Chrome, Safari, Electron) */
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+}
+
+.tabs-container::-webkit-scrollbar {
+    display: none;
+    /* Hide scrollbar for Chrome/Safari/Electron */
+}
+
+.tab {
+    background-color: var(--nova-background-light);
+    /* Light background for inactive tabs */
+    padding: 8px 15px;
+    /* Internal spacing for tab content */
+    border-radius: var(--nova-border-radius-medium);
+    /* Rounded corners for tabs */
+    cursor: pointer;
+    /* Indicate clickable */
+    font-size: 0.9em;
+    color: var(--nova-text-medium);
+    /* Medium grey text for inactive tabs */
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+    flex-shrink: 0;
+    /* Prevent individual tabs from shrinking */
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    /* Gap for future close icon */
+}
+
+.tab:hover {
+    background-color: var(--nova-border-light);
+    /* Slightly darker on hover */
+    transform: translateY(-1px);
+    /* Subtle lift */
+}
+
+.tab.active-tab {
+    background-color: var(--nova-primary-color);
+    /* Nova's primary color for active tab */
+    color: var(--nova-surface-light);
+    /* White text for active tab */
+    font-weight: 500;
+    /* Slightly bolder text */
+    box-shadow: var(--nova-shadow-soft);
+    /* Subtle shadow for active tab */
+    transform: translateY(0);
+    /* Reset transform */
+}
+
+.tab.active-tab:hover {
+    background-color: var(--nova-primary-color);
+    /* No change on hover for active tab */
+}
+
+.new-tab-button {
+    background-color: var(--nova-background-light);
+    /* Light background for + button */
+    color: var(--nova-text-dark);
+    /* Dark text for + button */
+    font-size: 1.2em;
+    /* Larger size for + */
+    padding: 8px 12px;
+    /* Adjusted padding */
+    border-radius: var(--nova-border-radius-medium);
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.new-tab-button:hover {
+    background-color: var(--nova-border-light);
+}

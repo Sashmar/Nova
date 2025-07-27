@@ -7,4 +7,8 @@ contextBridge.exposeInMainWorld('electron', {
     goBack: () => ipcRenderer.send('navigate-back'),
     goForward: () => ipcRenderer.send('navigate-forward'),
     reload: () => ipcRenderer.send('navigate-reload'),
+    getTabs: () => ipcRenderer.invoke('get-tabs'),
+    switchTab: (id) => ipcRenderer.send('switch-tab', id),
+    onTabsUpdated: (callback) => ipcRenderer.on('tabs-updated', (event, tabsData) => callback(tabsData)),
+    createNewTab: (url) => ipcRenderer.send('create-new-tab', url),
 });
