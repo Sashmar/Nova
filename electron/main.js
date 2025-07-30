@@ -40,6 +40,64 @@ function setBrowserViewBounds(bounds) {
     console.log('BrowserView bounds set to:', currentBrowserView.getBounds());
 }
 
+function attachBrowserViewListeners(browserView, tabId) {
+    const webContents = browserView.webContents;
+
+    // Listener for when the page finishes loading
+    webContents.on('did-finish-load', () => {
+        console.log(`main.js: BrowserView did-finish-load event fired for tab: ${tabId}`);
+        if (lastKnownBounds) {
+            setBrowserViewBounds(lastKnownBounds);
+        } else {
+            console.warn('main.js: did-finish-load, but no lastKnownBounds. Visual alignment may be delayed. Trying default.');
+            // Fallback for first load if bounds aren't ready yet
+            const { width, height } = mainWindow.getBounds();
+            // Assuming top bar height is roughly 80px (adjust if your header changes significantly)
+            const headerHeight = 80;
+            setBrowserViewBounds({ x: 0, y: headerHeight, width: width, height: height - headerHeight });
+        }
+        const loadedTab = tabs.find(tab => tab.id === tabId);
+        if (loadedTab) {
+            loadedTab.title = webContents.getTitle();
+            loadedTab.url = webContents.getURL();
+            sendTabsToRenderer();
+            console.log(`main.js: Tab title updated (did-finish-load) for ${loadedTab.id}: ${loadedTab.title}`);
+        }
+        // If this tab is currently active, also update the address bar
+        if (activeTabId === tabId && mainWindow && mainWindow.webContents) {
+            mainWindow.webContents.send('update-address-bar', webContents.getURL());
+        }
+    });
+
+    // Listener for when the page title changes dynamically
+    webContents.on('page-title-updated', (event, title) => {
+        const updatedTab = tabs.find(tab => tab.id === tabId);
+        if (updatedTab) {
+            updatedTab.title = title;
+            updatedTab.url = webContents.getURL(); // URL might also update (e.g., hash changes)
+            sendTabsToRenderer();
+            console.log(`main.js: Page title updated for ${updatedTab.id}: ${updatedTab.title}`);
+        }
+    });
+
+    // Listener for navigation events (e.g., clicking a link on the page)
+    webContents.on('did-navigate', (event, url) => {
+        const navigatedTab = tabs.find(tab => tab.id === tabId);
+        if (navigatedTab) {
+            navigatedTab.url = url;
+            // If this tab is currently active, update the address bar immediately
+            if (activeTabId === tabId && mainWindow && mainWindow.webContents) {
+                mainWindow.webContents.send('update-address-bar', url);
+            }
+            sendTabsToRenderer(); // Send updated tabs list (just in case URL changed, though title update usually covers it)
+            console.log(`main.js: Tab navigated for ${navigatedTab.id}: ${navigatedTab.url}`);
+        }
+    });
+
+    // For development: Open dev tools for the BrowserView
+    webContents.openDevTools();
+}
+
 function createAndActivateTab(url = 'https://nova.browser.com') { // Default to Nova's start page
     console.log('main.js: Creating and activating new tab for URL:', url);
 
@@ -57,6 +115,8 @@ function createAndActivateTab(url = 'https://nova.browser.com') { // Default to 
         }
     });
 
+    attachBrowserViewListeners(newBrowserView, newTabId);
+
     const newTab = {
         id: newTabId,
         url: url,
@@ -72,39 +132,6 @@ function createAndActivateTab(url = 'https://nova.browser.com') { // Default to 
 
     mainWindow.setBrowserView(currentBrowserView);
     currentBrowserView.webContents.loadURL(url);
-
-    // --- Event Listeners for the NEW BrowserView (Copied from load-url, now reusable) ---
-    currentBrowserView.webContents.on('did-finish-load', () => {
-        console.log('main.js: BrowserView did-finish-load event fired for tab:', newTab.id);
-        if (lastKnownBounds) {
-            setBrowserViewBounds(lastKnownBounds);
-        } else {
-            console.warn('main.js: did-finish-load, but no lastKnownBounds. Visual alignment may be delayed. Try resizing window slightly.');
-            const { width, height } = mainWindow.getBounds();
-            setBrowserViewBounds({ x: 0, y: 0, width: width, height: height });
-        }
-        // Update tab title after page loads
-        const loadedTab = tabs.find(tab => tab.id === newTab.id);
-        if (loadedTab) {
-            loadedTab.title = currentBrowserView.webContents.getTitle();
-            loadedTab.url = currentBrowserView.webContents.getURL();
-            sendTabsToRenderer(); // Send updated tabs list
-            console.log(`main.js: Tab title updated (did-finish-load) for ${loadedTab.id}: ${loadedTab.title}`);
-        }
-    });
-
-    currentBrowserView.webContents.on('page-title-updated', (event, title) => {
-        const updatedTab = tabs.find(tab => tab.id === newTab.id);
-        if (updatedTab) {
-            updatedTab.title = title;
-            updatedTab.url = currentBrowserView.webContents.getURL();
-            sendTabsToRenderer();
-            console.log(`main.js: Page title updated for ${updatedTab.id}: ${updatedTab.title}`);
-        }
-    });
-
-    currentBrowserView.webContents.openDevTools();
-    // --- End Event Listeners for BrowserView ---
 
     sendTabsToRenderer(); // Inform renderer about the new active tab
 }
@@ -233,6 +260,8 @@ function createWindow() {
             } else {
                 console.warn('switch-tab: No lastKnownBounds. BrowserView might not be positioned perfectly.');
             }
+
+            mainWindow.webContents.send('update-address-bar', targetTab.url);
 
             // 6. Inform renderer that tabs have updated (visual change in active tab)
             sendTabsToRenderer();

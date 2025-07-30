@@ -7,7 +7,7 @@ function BrowserHeader() {
     const handleAddressBarKeyDown = (event) => {
         // Check if the pressed key is 'Enter'
         if (event.key === 'Enter') {
-            let url = event.target.value; // Get the text from the input field
+            let url = addressBarValue; // Get the text from the input field
             // --- NEW AUTO-PREFIXING LOGIC ---
             // Check if the URL starts with a protocol, if not, prepend 'https://'
             if (!url.startsWith('http://') && !url.startsWith('https://') && url.includes('.')) {
@@ -71,6 +71,12 @@ function BrowserHeader() {
     // NEW: Function to select all text when address bar is focused/clicked
     const handleAddressBarFocus = (event) => {
         event.target.select(); // Selects all text in the input field
+
+        // --- NEW/MODIFIED LOGIC: Ensure address bar shows active tab's URL on focus ---
+        const currentActiveTab = tabsState.find(tab => tab.isActive);
+        if (currentActiveTab && addressBarValue !== currentActiveTab.url) {
+            setAddressBarValue(currentActiveTab.url);
+        }
     };
 
     const handleTabClick = (id) => {
@@ -84,6 +90,7 @@ function BrowserHeader() {
 
     const [tabsState, setTabsState] = useState([]); // State to hold the array of tab objects
     const [activeTabIdState, setActiveTabIdState] = useState(null); // State to hold the ID of the active tab
+    const [addressBarValue, setAddressBarValue] = useState('https://nova.browser.com');
     // --- END NEW REACT STATE ---
 
     // --- NEW useEffect FOR TAB DATA FETCHING & LISTENING - ADD THIS useEffect BLOCK HERE ---
@@ -96,6 +103,7 @@ function BrowserHeader() {
                 const currentActive = initialTabs.find(tab => tab.isActive);
                 if (currentActive) {
                     setActiveTabIdState(currentActive.id);
+                    setAddressBarValue(currentActive.url);
                 }
                 console.log('BrowserHeader: Fetched initial tabs:', initialTabs);
             }
@@ -107,6 +115,10 @@ function BrowserHeader() {
             const currentActive = tabsData.find(tab => tab.isActive);
             if (currentActive) {
                 setActiveTabIdState(currentActive.id);
+                setAddressBarValue(currentActive.url);
+            } else {
+                // If no active tabs (e.g., all closed), reset address bar to a default
+                setAddressBarValue('nova://newtab'); // Or 'about:blank'
             }
             console.log('BrowserHeader: Tabs updated from main process:', tabsData);
         };
@@ -116,6 +128,19 @@ function BrowserHeader() {
         // Subscribe to tabs updates from Electron
         if (window.electron && window.electron.onTabsUpdated) {
             window.electron.onTabsUpdated(handleTabsUpdated);
+        }
+
+        if (window.electron && window.electron.onUpdateAddressBar) {
+            const handleAddressBarUpdate = (url) => {
+                setAddressBarValue(url); // Update the state with the new URL
+                console.log('BrowserHeader: Address bar updated from main process:', url);
+            };
+            window.electron.onUpdateAddressBar(handleAddressBarUpdate);
+
+            // OPTIONAL (for perfect cleanup, but less critical for a single main header component):
+            // return () => {
+            //     window.electron.ipcRenderer.removeListener('update-address-bar', handleAddressBarUpdate);
+            // };
         }
 
         // Cleanup function: Unsubscribe from the event when the component unmounts
@@ -152,7 +177,9 @@ function BrowserHeader() {
                     type="text"
                     className="address-bar"
                     placeholder="Search or type URL..."
-                    defaultValue="https://nova.browser.com" // Default to a valid URL for testing
+                    value={addressBarValue}
+                    // --- NEW LINE: Update state when user types ---
+                    onChange={(e) => setAddressBarValue(e.target.value)}
                     onKeyDown={handleAddressBarKeyDown} // Attach the keydown event listener
                     onFocus={handleAddressBarFocus}
                 />
