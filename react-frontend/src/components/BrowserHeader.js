@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './BrowserHeader.css';
-import { IoIosArrowBack, IoIosArrowForward, IoMdRefresh } from 'react-icons/io';
+import { IoIosArrowBack, IoIosArrowForward, IoMdRefresh, IoMdHome, IoMdList } from 'react-icons/io';
 
 function BrowserHeader() {
     // Function to handle when the user presses a key in the address bar
@@ -37,6 +37,15 @@ function BrowserHeader() {
             console.log('Requesting navigation back.'); // Console log for debugging
         } else {
             console.error('window.electron.goBack is not defined. Preload script issue?');
+        }
+    };
+
+    const handleGoHome = () => {
+        if (window.electron && window.electron.goHome) {
+            window.electron.goHome();
+            console.log('Requesting navigation to home.');
+        } else {
+            console.error('window.electron.goHome is not defined. Preload script issue?');
         }
     };
 
@@ -81,7 +90,8 @@ function BrowserHeader() {
 
     const handleTabClick = (id) => {
         if (window.electron && window.electron.switchTab) {
-            window.electron.switchTab(id); // Tell Electron to activate this tab ID
+            window.electron.switchTab(id);
+            setIsDropdownOpen(false); // <--- Add this line to close the dropdown after clicking
             console.log('BrowserHeader: Requesting tab switch to:', id);
         } else {
             console.error('window.electron.switchTab is not defined. Preload script issue?');
@@ -91,6 +101,16 @@ function BrowserHeader() {
     const [tabsState, setTabsState] = useState([]); // State to hold the array of tab objects
     const [activeTabIdState, setActiveTabIdState] = useState(null); // State to hold the ID of the active tab
     const [addressBarValue, setAddressBarValue] = useState('https://nova.browser.com');
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    const handleDropdownToggle = () => {
+        const newState = !isDropdownOpen;
+        setIsDropdownOpen(prev => !prev);
+
+        if (window.electron && window.electron.toggleBrowserViewVisibility) {
+            window.electron.toggleBrowserViewVisibility(newState);
+        }
+    };
     // --- END NEW REACT STATE ---
 
     // --- NEW useEffect FOR TAB DATA FETCHING & LISTENING - ADD THIS useEffect BLOCK HERE ---
@@ -158,50 +178,73 @@ function BrowserHeader() {
 
 
     return (
-        <header className="browser-header">
-            <div className="nav-buttons">
-                <button className="nav-button" onClick={handleGoBack}>
-                    <IoIosArrowBack /> {/* Back Arrow Icon */}
-                </button>
-                <button className="nav-button" onClick={handleGoForward}>
-                    <IoIosArrowForward /> {/* Forward Arrow Icon */}
-                </button>
-                <button className="nav-button" onClick={handleReload}>
-                    <IoMdRefresh /> {/* Refresh Icon */}
-                </button>
-            </div>
-
-            {/* The Address Bar */}
-            <div className="address-bar-container">
-                <input
-                    type="text"
-                    className="address-bar"
-                    placeholder="Search or type URL..."
-                    value={addressBarValue}
-                    // --- NEW LINE: Update state when user types ---
-                    onChange={(e) => setAddressBarValue(e.target.value)}
-                    onKeyDown={handleAddressBarKeyDown} // Attach the keydown event listener
-                    onFocus={handleAddressBarFocus}
-                />
-            </div>
-
-            {/* Tabs Container */}
-            <div className="tabs-container">
-                {tabsState.map(tab => (
-                    <div
-                        key={tab.id}
-                        // MODIFIED LINE: Ensure active-tab class is applied and onClick is set
-                        className={`tab ${tab.id === activeTabIdState ? 'active-tab' : ''}`}
-                        onClick={() => handleTabClick(tab.id)} // This connects the click to the function
-                    >
-                        {tab.title}
-                    </div>
-                ))}
-                <div className="tab new-tab-button" onClick={handleNewTabClick}>
-                    + {/* Placeholder for New Tab Button */}
+        <div className="header-container">
+            <header className="browser-header">
+                <div className="nav-buttons">
+                    <button className="nav-button" onClick={handleGoBack}>
+                        <IoIosArrowBack /> {/* Back Arrow Icon */}
+                    </button>
+                    <button className="nav-button" onClick={handleGoForward}>
+                        <IoIosArrowForward /> {/* Forward Arrow Icon */}
+                    </button>
+                    <button className="nav-button" onClick={handleReload}>
+                        <IoMdRefresh /> {/* Refresh Icon */}
+                    </button>
+                    <button className="nav-button" onClick={handleGoHome}>
+                        <IoMdHome /> {/* Home Icon */}
+                    </button>
+                    <button className="nav-button tab-list-button" onClick={handleDropdownToggle}>
+                        <IoMdList /> {/* Icon for a list */}
+                    </button>
                 </div>
-            </div>
-        </header>
+
+                {/* The Address Bar */}
+                <div className="address-bar-container">
+                    <input
+                        type="text"
+                        className="address-bar"
+                        placeholder="Search or type URL..."
+                        value={addressBarValue}
+                        // --- NEW LINE: Update state when user types ---
+                        onChange={(e) => setAddressBarValue(e.target.value)}
+                        onKeyDown={handleAddressBarKeyDown} // Attach the keydown event listener
+                        onFocus={handleAddressBarFocus}
+                    />
+                </div>
+
+                {/* Tabs Container */}
+                <div className="tabs-container">
+                    {tabsState.map(tab => (
+                        <div
+                            key={tab.id}
+                            // MODIFIED LINE: Ensure active-tab class is applied and onClick is set
+                            className={`tab ${tab.id === activeTabIdState ? 'active-tab' : ''}`}
+                            onClick={() => handleTabClick(tab.id)} // This connects the click to the function
+                        >
+                            {tab.title}
+                        </div>
+                    ))}
+                    <div className="tab new-tab-button" onClick={handleNewTabClick}>
+                        + {/* Placeholder for New Tab Button */}
+                    </div>
+                </div>
+            </header>
+
+            {isDropdownOpen && (
+                <div className="tab-list-dropdown">
+                    {tabsState.map(tab => (
+                        <div
+                            key={tab.id}
+                            className={`tab-list-item ${tab.id === activeTabIdState ? 'active' : ''}`}
+                            onClick={() => handleTabClick(tab.id)}
+                        >
+                            {tab.title}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+
     );
 }
 

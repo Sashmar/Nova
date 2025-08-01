@@ -196,7 +196,20 @@ function createWindow() {
     // Listener 2: When a URL is requested from the Address Bar
     ipcMain.on('load-url', (event, url) => {
         console.log('load-url received:', url); // KEEP THIS LINE, it was part of previous block
-        createAndActivateTab(url); // This is the new line
+        if (currentBrowserView) {
+            // If so, load the URL in the existing, active tab.
+            currentBrowserView.webContents.loadURL(url);
+            // We also need to update the tab's data immediately since the load-url event
+            // doesn't happen until later, which can cause a visual lag.
+            const activeTab = tabs.find(tab => tab.isActive);
+            if (activeTab) {
+                activeTab.url = url; // Update the URL in our local tabs array
+                sendTabsToRenderer(); // Send the updated list to the UI
+            }
+        } else {
+            // If there are no tabs open, create a new one as a fallback.
+            createAndActivateTab(url);
+        }
     });
 
     ipcMain.on('create-new-tab', (event, url = 'https://nova.browser.com') => { // Default URL for new tab
@@ -228,6 +241,38 @@ function createWindow() {
             console.log('Reloading page.');
         } else {
             console.log('Cannot reload: No BrowserView present.');
+        }
+    });
+
+    ipcMain.on('go-home', () => {
+        if (currentBrowserView) {
+            // You can define your home URL here, or make it configurable later.
+            // For now, let's use the same default as new tabs.
+            const homeUrl = 'https://nova.browser.com';
+            currentBrowserView.webContents.loadURL(homeUrl);
+            console.log('Navigating to home page:', homeUrl);
+        } else {
+            console.log('Cannot go home: No BrowserView present. Creating new tab instead.');
+            createAndActivateTab('https://nova.browser.com'); // Create a new tab if none exist
+        }
+    });
+
+    ipcMain.on('toggle-browser-view-visibility', (event, isDropdownOpen) => {
+        console.log('main.js: Toggle BrowserView visibility to:', !isDropdownOpen);
+        if (isDropdownOpen) {
+            // Dropdown is open, so hide the BrowserView
+            if (currentBrowserView) {
+                mainWindow.removeBrowserView(currentBrowserView);
+            }
+        } else {
+            // Dropdown is closed, so show the BrowserView again
+            if (currentBrowserView) {
+                mainWindow.setBrowserView(currentBrowserView);
+                // CRITICAL: Re-apply the last known bounds to position it correctly
+                if (lastKnownBounds) {
+                    setBrowserViewBounds(lastKnownBounds);
+                }
+            }
         }
     });
 
@@ -303,6 +348,10 @@ function createWindow() {
 // initialization and is ready to create browser windows.
 app.whenReady().then(() => {
     createWindow(); // This is where createWindow() is first called
+    // --- NEW LINE: Create and activate a default tab on launch ---
+    createAndActivateTab('https://nova.browser.com');
+
+    sendTabsToRenderer();
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common

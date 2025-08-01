@@ -11,7 +11,9 @@ contextBridge.exposeInMainWorld('electron', {
     switchTab: (id) => ipcRenderer.send('switch-tab', id),
     onTabsUpdated: (callback) => ipcRenderer.on('tabs-updated', (event, tabsData) => callback(tabsData)),
     createNewTab: (url) => ipcRenderer.send('create-new-tab', url),
+    goHome: () => ipcRenderer.send('go-home'),
+    toggleBrowserViewVisibility: (isVisible) => ipcRenderer.send('toggle-browser-view-visibility', isVisible),
     onUpdateAddressBar: (callback) => {
         ipcRenderer.on('update-address-bar', (event, url) => callback(url));
-    }
+    },
 });

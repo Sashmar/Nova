@@ -197,3 +197,43 @@
 .new-tab-button:hover {
     background-color: var(--nova-border-light);
 }
+
+.header-container {
+    position: relative;
+    /* Make this a positioning context for the dropdown */
+}
+
+.tab-list-dropdown {
+    position: absolute;
+    top: 65px;
+    /* Adjust this value based on your header's actual height */
+    left: 20px;
+    /* Adjust to align with the button */
+    width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: var(--nova-surface-light);
+    border-radius: var(--nova-border-radius-large);
+    box-shadow: var(--nova-shadow-medium);
+    z-index: 100;
+    /* Ensure it's on top of everything */
+    padding: 10px;
+}
+
+.tab-list-item {
+    padding: 10px 15px;
+    border-radius: var(--nova-border-radius-medium);
+    cursor: pointer;
+    color: var(--nova-text-dark);
+    margin-bottom: 5px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.tab-list-item:hover {
+    background-color: var(--nova-border-light);
+}
+
+.tab-list-item.active {
+    background-color: var(--nova-primary-color);
+    color: var(--nova-surface-light);
+}
