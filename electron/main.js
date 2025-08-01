@@ -136,6 +136,36 @@ function createAndActivateTab(url = 'https://nova.browser.com') { // Default to 
     sendTabsToRenderer(); // Inform renderer about the new active tab
 }
 
+function activateTab(idToSwitchTo) {
+    const targetTab = tabs.find(tab => tab.id === idToSwitchTo);
+
+    if (targetTab && !targetTab.isActive) {
+        if (currentBrowserView) {
+            mainWindow.removeBrowserView(currentBrowserView);
+        }
+
+        tabs.forEach(tab => tab.isActive = false);
+        targetTab.isActive = true;
+
+        activeTabId = targetTab.id;
+        currentBrowserView = targetTab.browserView;
+
+        mainWindow.setBrowserView(currentBrowserView);
+        if (lastKnownBounds) {
+            setBrowserViewBounds(lastKnownBounds);
+        } else {
+            console.warn('activateTab: No lastKnownBounds. BrowserView might not be positioned perfectly.');
+        }
+
+        sendTabsToRenderer();
+        console.log('main.js: Switched to tab ID:', idToSwitchTo);
+    } else if (targetTab && targetTab.isActive) {
+        console.log('main.js: Tab is already active:', idToSwitchTo);
+    } else {
+        console.warn('main.js: Attempted to activate non-existent tab:', idToSwitchTo);
+    }
+}
+
 function sendTabsToRenderer() {
     if (mainWindow && mainWindow.webContents) {
         // Send the current list of tabs to the renderer process
@@ -275,6 +305,68 @@ function createWindow() {
             }
         }
     });
+
+    ipcMain.on('close-tab', (event, tabIdToClose) => {
+        console.log(`main.js: Received request to close tab ${tabIdToClose}`);
+        const tabToClose = tabs.find(tab => tab.id === tabIdToClose);
+
+        if (!tabToClose) {
+            console.warn(`main.js: No tab found with id ${tabIdToClose}`);
+            return;
+        }
+
+        // DEBUG LOGGING
+        console.log('main.js: Tab to close:', tabToClose);
+        console.log('main.js: typeof tabToClose.browserView:', typeof tabToClose.browserView);
+        console.log('main.js: instanceof BrowserView:', tabToClose.browserView instanceof BrowserView);
+
+        try {
+            if (
+                tabToClose.browserView instanceof BrowserView &&
+                tabToClose.browserView.webContents &&
+                !tabToClose.browserView.webContents.isDestroyed()
+            ) {
+                mainWindow.removeBrowserView(tabToClose.browserView);
+                tabToClose.browserView.destroy();
+                console.log(`main.js: Destroyed BrowserView for tab ${tabIdToClose}`);
+            } else {
+                console.warn(`main.js: Skipped destroying. browserView is not valid for tab ${tabIdToClose}`);
+            }
+        } catch (error) {
+            console.error(`main.js: Failed to destroy BrowserView for tab ${tabIdToClose}:`, error);
+        }
+
+        // Remove the tab from the tabs array
+        const indexToRemove = tabs.findIndex(tab => tab.id === tabIdToClose);
+        if (indexToRemove !== -1) {
+            tabs.splice(indexToRemove, 1);
+        }
+
+        // Activate the next available tab if there are any left
+        if (tabs.length > 0) {
+            const nextTab = tabs[Math.max(0, indexToRemove - 1)] || tabs[0];
+            nextTab.isActive = true;
+            currentBrowserView = nextTab.browserView;
+            mainWindow.setBrowserView(nextTab.browserView);
+            if (lastKnownBounds) {
+                setBrowserViewBounds(lastKnownBounds);
+            } else {
+                console.warn('close-tab: No lastKnownBounds. Using fallback bounds.');
+                const { width, height } = mainWindow.getBounds();
+                const fallbackBounds = { x: 0, y: 80, width, height: height - 80 };
+                nextTab.browserView.setBounds(fallbackBounds);
+            }
+
+            nextTab.browserView.webContents.focus();
+            console.log(`main.js: Switched to tab ${nextTab.id}`);
+        } else {
+            currentBrowserView = null;
+        }
+
+        // Update tabs state in renderer
+        sendTabsToRenderer();
+    });
+
 
     ipcMain.on('switch-tab', (event, idToSwitchTo) => {
         console.log('main.js: Request to switch to tab ID:', idToSwitchTo);

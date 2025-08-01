@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './BrowserHeader.css';
 import { IoIosArrowBack, IoIosArrowForward, IoMdRefresh, IoMdHome, IoMdList } from 'react-icons/io';
 
 function BrowserHeader() {
+    const dropdownRef = useRef(null);
     // Function to handle when the user presses a key in the address bar
     const handleAddressBarKeyDown = (event) => {
         // Check if the pressed key is 'Enter'
@@ -77,6 +78,20 @@ function BrowserHeader() {
         }
     };
 
+
+    const handleCloseTab = (id, event) => {
+        console.log(`BrowserHeader: handleCloseTab called. ID to close: ${id}`);
+        if (event) {
+            event.stopPropagation();
+        }
+        if (window.electron && window.electron.closeTab) {
+            window.electron.closeTab(id);
+            console.log('BrowserHeader: Requesting to close tab:', id);
+        } else {
+            console.error('window.electron.closeTab is not defined. Preload script issue?');
+        }
+    };
+
     // NEW: Function to select all text when address bar is focused/clicked
     const handleAddressBarFocus = (event) => {
         event.target.select(); // Selects all text in the input field
@@ -91,7 +106,7 @@ function BrowserHeader() {
     const handleTabClick = (id) => {
         if (window.electron && window.electron.switchTab) {
             window.electron.switchTab(id);
-            setIsDropdownOpen(false); // <--- Add this line to close the dropdown after clicking
+            setIsDropdownOpen(false);
             console.log('BrowserHeader: Requesting tab switch to:', id);
         } else {
             console.error('window.electron.switchTab is not defined. Preload script issue?');
@@ -104,18 +119,13 @@ function BrowserHeader() {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const handleDropdownToggle = () => {
-        const newState = !isDropdownOpen;
         setIsDropdownOpen(prev => !prev);
 
-        if (window.electron && window.electron.toggleBrowserViewVisibility) {
-            window.electron.toggleBrowserViewVisibility(newState);
-        }
     };
     // --- END NEW REACT STATE ---
 
     // --- NEW useEffect FOR TAB DATA FETCHING & LISTENING - ADD THIS useEffect BLOCK HERE ---
     useEffect(() => {
-        // Function to fetch initial tabs data from Electron
         const fetchInitialTabs = async () => {
             if (window.electron && window.electron.getTabs) {
                 const initialTabs = await window.electron.getTabs();
@@ -129,7 +139,6 @@ function BrowserHeader() {
             }
         };
 
-        // Function to handle updates from Electron when tabs change
         const handleTabsUpdated = (tabsData) => {
             setTabsState(tabsData);
             const currentActive = tabsData.find(tab => tab.isActive);
@@ -137,39 +146,38 @@ function BrowserHeader() {
                 setActiveTabIdState(currentActive.id);
                 setAddressBarValue(currentActive.url);
             } else {
-                // If no active tabs (e.g., all closed), reset address bar to a default
-                setAddressBarValue('nova://newtab'); // Or 'about:blank'
+                setAddressBarValue('nova://newtab');
             }
             console.log('BrowserHeader: Tabs updated from main process:', tabsData);
         };
 
-        fetchInitialTabs(); // Call on component mount to get initial tabs
+        const handleAddressBarUpdate = (url) => {
+            setAddressBarValue(url);
+            console.log('BrowserHeader: Address bar updated from main process:', url);
+        };
 
-        // Subscribe to tabs updates from Electron
-        if (window.electron && window.electron.onTabsUpdated) {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsDropdownOpen(false);
+                if (window.electron && window.electron.toggleBrowserViewVisibility) {
+                    window.electron.toggleBrowserViewVisibility(false);
+                }
+            }
+        };
+
+        fetchInitialTabs();
+        if (window.electron) {
             window.electron.onTabsUpdated(handleTabsUpdated);
-        }
-
-        if (window.electron && window.electron.onUpdateAddressBar) {
-            const handleAddressBarUpdate = (url) => {
-                setAddressBarValue(url); // Update the state with the new URL
-                console.log('BrowserHeader: Address bar updated from main process:', url);
-            };
             window.electron.onUpdateAddressBar(handleAddressBarUpdate);
-
-            // OPTIONAL (for perfect cleanup, but less critical for a single main header component):
-            // return () => {
-            //     window.electron.ipcRenderer.removeListener('update-address-bar', handleAddressBarUpdate);
-            // };
         }
 
-        // Cleanup function: Unsubscribe from the event when the component unmounts
+        document.addEventListener('mousedown', handleClickOutside);
+
         return () => {
-            if (window.electron && window.electron.onTabsUpdated) {
-                // Note: Electron's ipcRenderer.removeListener can be complex with named functions,
-                // For simplicity, we assume this component persists. For dynamic components, proper unsubscribe is needed.
-                // For now, this line is a placeholder for proper cleanup in a more complex app.
+            document.removeEventListener('mousedown', handleClickOutside);
+            if (window.electron) {
                 // ipcRenderer.removeListener('tabs-updated', handleTabsUpdated);
+                // ipcRenderer.removeListener('update-address-bar', handleAddressBarUpdate);
             }
         };
     }, []);
@@ -182,53 +190,55 @@ function BrowserHeader() {
             <header className="browser-header">
                 <div className="nav-buttons">
                     <button className="nav-button" onClick={handleGoBack}>
-                        <IoIosArrowBack /> {/* Back Arrow Icon */}
+                        <IoIosArrowBack />
                     </button>
                     <button className="nav-button" onClick={handleGoForward}>
-                        <IoIosArrowForward /> {/* Forward Arrow Icon */}
+                        <IoIosArrowForward />
                     </button>
                     <button className="nav-button" onClick={handleReload}>
-                        <IoMdRefresh /> {/* Refresh Icon */}
+                        <IoMdRefresh />
                     </button>
                     <button className="nav-button" onClick={handleGoHome}>
-                        <IoMdHome /> {/* Home Icon */}
+                        <IoMdHome />
                     </button>
                     <button className="nav-button tab-list-button" onClick={handleDropdownToggle}>
-                        <IoMdList /> {/* Icon for a list */}
+                        <IoMdList />
+                    </button>
+                    <button className="nav-button new-tab-button" onClick={handleNewTabClick}>
+                        +
                     </button>
                 </div>
 
-                {/* The Address Bar */}
+                {tabsState.find(tab => tab.isActive) && (
+                    <div
+                        className="active-tab-pill"
+                        onClick={handleDropdownToggle}
+                    >
+                        <span className="active-tab-title">
+                            {tabsState.find(tab => tab.isActive).title}
+                        </span>
+                        <button
+                            className="tab-close-button"
+                            onClick={(event) => handleCloseTab(activeTabIdState, event)}
+                        >
+                            &times;
+                        </button>
+                    </div>
+                )}
+
                 <div className="address-bar-container">
                     <input
                         type="text"
                         className="address-bar"
                         placeholder="Search or type URL..."
                         value={addressBarValue}
-                        // --- NEW LINE: Update state when user types ---
                         onChange={(e) => setAddressBarValue(e.target.value)}
-                        onKeyDown={handleAddressBarKeyDown} // Attach the keydown event listener
+                        onKeyDown={handleAddressBarKeyDown}
                         onFocus={handleAddressBarFocus}
                     />
                 </div>
-
-                {/* Tabs Container */}
-                <div className="tabs-container">
-                    {tabsState.map(tab => (
-                        <div
-                            key={tab.id}
-                            // MODIFIED LINE: Ensure active-tab class is applied and onClick is set
-                            className={`tab ${tab.id === activeTabIdState ? 'active-tab' : ''}`}
-                            onClick={() => handleTabClick(tab.id)} // This connects the click to the function
-                        >
-                            {tab.title}
-                        </div>
-                    ))}
-                    <div className="tab new-tab-button" onClick={handleNewTabClick}>
-                        + {/* Placeholder for New Tab Button */}
-                    </div>
-                </div>
             </header>
+
 
             {isDropdownOpen && (
                 <div className="tab-list-dropdown">
@@ -243,8 +253,8 @@ function BrowserHeader() {
                     ))}
                 </div>
             )}
-        </div>
 
+        </div>
     );
 }
 

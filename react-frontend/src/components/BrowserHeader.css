@@ -237,3 +237,60 @@
     background-color: var(--nova-primary-color);
     color: var(--nova-surface-light);
 }
+
+/* Add this if you want to style the + icon specifically */
+.new-tab-button {
+    font-size: 1.5em;
+    /* Make the plus sign a little larger */
+    font-weight: 500;
+}
+
+/* browserheader.css (Add this at the bottom) */
+
+/* The active tab pill */
+.active-tab-pill {
+    background-color: var(--nova-primary-color);
+    color: var(--nova-surface-light);
+    padding: 8px 12px;
+    border-radius: var(--nova-border-radius-medium);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95em;
+    font-weight: 500;
+    box-shadow: var(--nova-shadow-soft);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.1s ease;
+}
+
+.active-tab-pill:hover {
+    transform: translateY(-1px);
+}
+
+/* The close button inside the active tab pill */
+.active-tab-pill .tab-close-button {
+    background: none;
+    border: none;
+    color: var(--nova-surface-light);
+    opacity: 0.6;
+    font-size: 1.2em;
+    line-height: 1;
+    padding: 0;
+    margin-left: 5px;
+    cursor: pointer;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.active-tab-pill .tab-close-button:hover {
+    opacity: 1;
+}
+
+/* Optional: style for the title to prevent overflow */
+.active-tab-title {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
