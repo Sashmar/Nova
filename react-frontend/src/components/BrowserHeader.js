@@ -283,6 +283,12 @@ function BrowserHeader() {
                             onClick={() => handleTabClick(tab.id)}
                         >
                             {tab.title}
+                            <button
+                                className="tab-close-button dropdown-close-button"
+                                onClick={(event) => handleCloseTab(tab.id, event)}
+                            >
+                                &times;
+                            </button>
                         </div>
                     ))}
                 </div>

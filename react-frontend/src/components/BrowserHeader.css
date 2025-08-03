@@ -294,3 +294,27 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+/* Styling for the dropdown list item container (using flexbox) */
+.tab-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* You can copy the rest of your existing .tab-list-item styles here */
+}
+
+/* Styling for the close button within the dropdown list */
+.tab-list-item .dropdown-close-button {
+    background-color: transparent;
+    border: none;
+    color: inherit;
+    border-radius: var(--nova-border-radius-small);
+    padding: 5px;
+    opacity: 0.5;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.tab-list-item .dropdown-close-button:hover {
+    background-color: var(--nova-border-light);
+    opacity: 1;
+}
