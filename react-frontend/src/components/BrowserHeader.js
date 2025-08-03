@@ -2,6 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import './BrowserHeader.css';
 import { IoIosArrowBack, IoIosArrowForward, IoMdRefresh, IoMdHome, IoMdList } from 'react-icons/io';
 
+const hideBrowserView = () => {
+    if (window.electron?.toggleBrowserViewVisibility) {
+        window.electron.toggleBrowserViewVisibility(false);
+    }
+};
+
+const showBrowserView = () => {
+    if (window.electron?.toggleBrowserViewVisibility) {
+        window.electron.toggleBrowserViewVisibility(true);
+    }
+};
+
+
 function BrowserHeader() {
     const dropdownRef = useRef(null);
     // Function to handle when the user presses a key in the address bar
@@ -119,9 +132,26 @@ function BrowserHeader() {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const handleDropdownToggle = () => {
-        setIsDropdownOpen(prev => !prev);
+        const newDropdownState = !isDropdownOpen;
+        setIsDropdownOpen(newDropdownState);
 
+        if (window.electron && window.electron.toggleBrowserViewVisibility) {
+            window.electron.toggleBrowserViewVisibility(!newDropdownState);
+            // Hide view if dropdown is open
+        }
     };
+
+    const handleDropdownOpen = () => {
+        setIsDropdownOpen(true);
+        hideBrowserView(); // Hide web content when dropdown is open
+    };
+
+    const handleDropdownClose = () => {
+        setIsDropdownOpen(false);
+        showBrowserView(); // Show web content again when dropdown is closed
+    };
+
+
     // --- END NEW REACT STATE ---
 
     // --- NEW useEffect FOR TAB DATA FETCHING & LISTENING - ADD THIS useEffect BLOCK HERE ---
@@ -159,9 +189,7 @@ function BrowserHeader() {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsDropdownOpen(false);
-                if (window.electron && window.electron.toggleBrowserViewVisibility) {
-                    window.electron.toggleBrowserViewVisibility(false);
-                }
+                showBrowserView();
             }
         };
 
@@ -201,7 +229,13 @@ function BrowserHeader() {
                     <button className="nav-button" onClick={handleGoHome}>
                         <IoMdHome />
                     </button>
-                    <button className="nav-button tab-list-button" onClick={handleDropdownToggle}>
+                    <button
+                        className="nav-button tab-list-button"
+                        onClick={() => {
+                            isDropdownOpen ? handleDropdownClose() : handleDropdownOpen();
+                        }}
+                    >
+
                         <IoMdList />
                     </button>
                     <button className="nav-button new-tab-button" onClick={handleNewTabClick}>

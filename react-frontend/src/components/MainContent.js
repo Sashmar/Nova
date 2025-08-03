@@ -4,6 +4,18 @@ import './MainContent.css';
 function MainContent() {
     const mainContentRef = useRef(null); // Create a ref to attach to the main content div
 
+    const handleDropdownOpen = () => {
+        if (window.electron) {
+            window.electron.send('dropdown-open');
+        }
+    };
+
+    const handleDropdownClose = () => {
+        if (window.electron) {
+            window.electron.send('dropdown-close');
+        }
+    };
+
     // useEffect hook to run code after render and on component mount/unmount
     useEffect(() => {
         const sendMainContentBounds = () => {

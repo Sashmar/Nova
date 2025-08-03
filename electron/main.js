@@ -287,24 +287,26 @@ function createWindow() {
         }
     });
 
-    ipcMain.on('toggle-browser-view-visibility', (event, isDropdownOpen) => {
-        console.log('main.js: Toggle BrowserView visibility to:', !isDropdownOpen);
-        if (isDropdownOpen) {
-            // Dropdown is open, so hide the BrowserView
-            if (currentBrowserView) {
-                mainWindow.removeBrowserView(currentBrowserView);
+    ipcMain.on('toggle-browser-view-visibility', (event, isVisible) => {
+        const activeTab = tabs.find(tab => tab.id === activeTabId);
+        if (activeTab && activeTab.browserView) {
+            const view = activeTab.browserView;
+            const window = BrowserWindow.getFocusedWindow();
+
+            if (isVisible) {
+                window.setBrowserView(view);
+                if (lastKnownBounds) {
+                    view.setBounds(lastKnownBounds);
+                }
+            } else {
+                window.setBrowserView(null);
             }
         } else {
-            // Dropdown is closed, so show the BrowserView again
-            if (currentBrowserView) {
-                mainWindow.setBrowserView(currentBrowserView);
-                // CRITICAL: Re-apply the last known bounds to position it correctly
-                if (lastKnownBounds) {
-                    setBrowserViewBounds(lastKnownBounds);
-                }
-            }
+            console.warn('toggle-browser-view-visibility: No active tab or BrowserView found.');
         }
     });
+
+
 
     ipcMain.on('close-tab', (event, tabIdToClose) => {
         console.log(`main.js: Received request to close tab ${tabIdToClose}`);
