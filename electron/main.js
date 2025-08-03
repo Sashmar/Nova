@@ -88,8 +88,12 @@ function attachBrowserViewListeners(browserView, tabId) {
             // If this tab is currently active, update the address bar immediately
             if (activeTabId === tabId && mainWindow && mainWindow.webContents) {
                 mainWindow.webContents.send('update-address-bar', url);
+
+                // --- NEW LOGIC: Determine and send security status ---
+                const securityStatus = url.startsWith('https://') ? 'secure' : 'insecure';
+                mainWindow.webContents.send('security-status-updated', securityStatus);
             }
-            sendTabsToRenderer(); // Send updated tabs list (just in case URL changed, though title update usually covers it)
+            sendTabsToRenderer(); // Send updated tabs list
             console.log(`main.js: Tab navigated for ${navigatedTab.id}: ${navigatedTab.url}`);
         }
     });

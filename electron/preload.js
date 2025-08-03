@@ -17,4 +17,7 @@ contextBridge.exposeInMainWorld('electron', {
         ipcRenderer.on('update-address-bar', (event, url) => callback(url));
     },
     closeTab: (id) => ipcRenderer.send('close-tab', id),
+    onSecurityStatusUpdated: (callback) => {
+        ipcRenderer.on('security-status-updated', (event, status) => callback(status));
+    },
 });

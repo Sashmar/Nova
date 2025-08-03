@@ -318,3 +318,25 @@
     background-color: var(--nova-border-light);
     opacity: 1;
 }
+
+/* browserheader.css (Add at the bottom of the file) */
+
+.security-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    color: var(--nova-text-medium);
+}
+
+.security-icon.secure {
+    color: var(--nova-secondary-color);
+    /* Green */
+}
+
+.security-icon.insecure {
+    color: #ff5252;
+    /* Red */
+}

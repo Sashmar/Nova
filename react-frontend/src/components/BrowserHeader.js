@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './BrowserHeader.css';
-import { IoIosArrowBack, IoIosArrowForward, IoMdRefresh, IoMdHome, IoMdList } from 'react-icons/io';
+import { IoIosArrowBack, IoIosArrowForward, IoMdRefresh, IoMdHome, IoMdList, IoMdLock, IoMdWarning } from 'react-icons/io';
 
 const hideBrowserView = () => {
     if (window.electron?.toggleBrowserViewVisibility) {
@@ -16,6 +16,9 @@ const showBrowserView = () => {
 
 
 function BrowserHeader() {
+    // BrowserHeader.js (at the top of the function)
+
+    const [securityStatus, setSecurityStatus] = useState('secure');
     const dropdownRef = useRef(null);
     // Function to handle when the user presses a key in the address bar
     const handleAddressBarKeyDown = (event) => {
@@ -161,6 +164,7 @@ function BrowserHeader() {
                 const initialTabs = await window.electron.getTabs();
                 setTabsState(initialTabs);
                 const currentActive = initialTabs.find(tab => tab.isActive);
+                window.electron.onSecurityStatusUpdated(setSecurityStatus);
                 if (currentActive) {
                     setActiveTabIdState(currentActive.id);
                     setAddressBarValue(currentActive.url);
@@ -259,6 +263,13 @@ function BrowserHeader() {
                         </button>
                     </div>
                 )}
+                <div className="security-icon-container">
+                    {securityStatus === 'secure' ? (
+                        <IoMdLock className="security-icon secure" />
+                    ) : (
+                        <IoMdWarning className="security-icon insecure" />
+                    )}
+                </div>
 
                 <div className="address-bar-container">
                     <input
