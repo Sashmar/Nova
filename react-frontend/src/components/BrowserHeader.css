@@ -3,6 +3,7 @@
     padding: 15px 20px;
     box-shadow: var(--nova-shadow-soft);
     z-index: 10;
+    position: relative;
     border-bottom-left-radius: var(--nova-border-radius-large);
     border-bottom-right-radius: var(--nova-border-radius-large);
 

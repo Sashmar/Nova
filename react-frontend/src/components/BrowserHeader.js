@@ -15,7 +15,7 @@ const showBrowserView = () => {
 };
 
 
-function BrowserHeader() {
+function BrowserHeader({ onActiveTabChange }) {
     // BrowserHeader.js (at the top of the function)
 
     const [securityStatus, setSecurityStatus] = useState('secure');
@@ -179,8 +179,10 @@ function BrowserHeader() {
             if (currentActive) {
                 setActiveTabIdState(currentActive.id);
                 setAddressBarValue(currentActive.url);
+                onActiveTabChange(currentActive.url);
             } else {
                 setAddressBarValue('nova://newtab');
+                onActiveTabChange('nova://newtab');
             }
             console.log('BrowserHeader: Tabs updated from main process:', tabsData);
         };
