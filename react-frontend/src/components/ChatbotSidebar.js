@@ -34,6 +34,10 @@ function ChatbotSidebar() {
         }, 500);
     };
 
+    const handleSummarizeClick = () => {
+        console.log("Summarize button clicked! Will connect to backend next.");
+    };
+
     // --- EFFECT ---
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -42,6 +46,11 @@ function ChatbotSidebar() {
         <aside className="chatbot-sidebar">
             <h2 className="sidebar-title">Nova Assistant</h2>
 
+            <div className="context-actions">
+                <button className="context-button" onClick={handleSummarizeClick}>
+                    Summarize Page
+                </button>
+            </div>
             <div className="chat-history">
                 {messages.map(message => (
                     <div key={message.id} className={`chat-message ${message.sender}`}>

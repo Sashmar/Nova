@@ -119,3 +119,28 @@
 .send-button:hover {
     opacity: 0.85;
 }
+
+.context-actions {
+    padding: 0 20px 15px 20px;
+    border-bottom: 1px solid var(--nova-border-light);
+    display: flex;
+    gap: 10px;
+}
+
+.context-button {
+    flex-grow: 1;
+    background-color: var(--nova-background-light);
+    border: 1px solid var(--nova-border-light);
+    color: var(--nova-text-dark);
+    padding: 10px;
+    border-radius: var(--nova-border-radius-medium);
+    font-size: 0.9em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.context-button:hover {
+    background-color: var(--nova-border-light);
+    border-color: #d7dce2;
+}

@@ -214,7 +214,7 @@ function BrowserHeader({ onActiveTabChange }) {
                 // ipcRenderer.removeListener('update-address-bar', handleAddressBarUpdate);
             }
         };
-    }, []);
+    }, [onActiveTabChange]);
 
 
 
