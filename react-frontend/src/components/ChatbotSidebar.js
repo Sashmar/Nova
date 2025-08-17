@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { IoMdSend } from 'react-icons/io';
+import { v4 as uuidv4 } from 'uuid';
 import './ChatbotSidebar.css'; // Import its specific styles
 
 function ChatbotSidebar() {
@@ -15,27 +16,45 @@ function ChatbotSidebar() {
         if (input.trim() === '') return;
 
         const userMessage = {
-            id: messages.length + 1,
+            id: uuidv4(), // Use uuid for a unique ID
             text: input,
             sender: 'user'
         };
-
-        const aiResponse = {
-            id: messages.length + 2,
-            text: `This is a placeholder response for: "${input}"`,
-            sender: 'ai'
-        };
-
         setMessages(currentMessages => [...currentMessages, userMessage]);
         setInput('');
 
         setTimeout(() => {
+            const aiResponse = {
+                id: uuidv4(), // Use uuid for the AI response too
+                text: `This is a placeholder response for: "${input}"`,
+                sender: 'ai'
+            };
             setMessages(currentMessages => [...currentMessages, aiResponse]);
         }, 500);
     };
 
-    const handleSummarizeClick = () => {
-        console.log("Summarize button clicked! Will connect to backend next.");
+    const handleSummarizeClick = async () => {
+        const thinkingMessage = {
+            id: uuidv4(), // Use uuid for a unique ID
+            text: 'Summarizing page...',
+            sender: 'ai',
+            type: 'status'
+        };
+        setMessages(currentMessages => [...currentMessages, thinkingMessage]);
+
+        const summary = await window.electron.summarizePage();
+
+        const aiResponse = {
+            id: uuidv4(), // Use uuid for the final response
+            text: summary,
+            sender: 'ai'
+        };
+
+        // This will now correctly find and remove the status message before adding the new one.
+        setMessages(currentMessages => [
+            ...currentMessages.filter(msg => msg.type !== 'status'),
+            aiResponse
+        ]);
     };
 
     // --- EFFECT ---

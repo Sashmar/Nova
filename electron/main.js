@@ -102,7 +102,7 @@ function attachBrowserViewListeners(browserView, tabId) {
     webContents.openDevTools();
 }
 
-function createAndActivateTab(url = 'https://nova.browser.com') { // Default to Nova's start page
+function createAndActivateTab(url = `file://${path.join(__dirname, 'new-tab.html')}`) { // Default to Nova's start page
     console.log('main.js: Creating and activating new tab for URL:', url);
 
     // Remove the previously active BrowserView from the window, if it exists
@@ -246,9 +246,10 @@ function createWindow() {
         }
     });
 
-    ipcMain.on('create-new-tab', (event, url = 'https://nova.browser.com') => { // Default URL for new tab
-        console.log('create-new-tab received: Requesting blank tab for URL:', url);
-        createAndActivateTab(url); // Reuse our helper to create and load the new tab
+    ipcMain.on('create-new-tab', () => {
+        // This now calls createAndActivateTab with no URL, 
+        // so it will use the default file path we set up earlier.
+        createAndActivateTab();
     });
 
     ipcMain.on('navigate-back', () => {
@@ -282,12 +283,12 @@ function createWindow() {
         if (currentBrowserView) {
             // You can define your home URL here, or make it configurable later.
             // For now, let's use the same default as new tabs.
-            const homeUrl = 'https://nova.browser.com';
+            const homeUrl = `file://${path.join(__dirname, 'new-tab.html')}`;
             currentBrowserView.webContents.loadURL(homeUrl);
             console.log('Navigating to home page:', homeUrl);
         } else {
             console.log('Cannot go home: No BrowserView present. Creating new tab instead.');
-            createAndActivateTab('https://nova.browser.com'); // Create a new tab if none exist
+            createAndActivateTab(`file://${path.join(__dirname, 'new-tab.html')}`); // Create a new tab if none exist
         }
     });
 
@@ -447,7 +448,7 @@ function createWindow() {
 app.whenReady().then(() => {
     createWindow(); // This is where createWindow() is first called
     // --- NEW LINE: Create and activate a default tab on launch ---
-    createAndActivateTab('https://nova.browser.com');
+    createAndActivateTab(`file://${path.join(__dirname, 'new-tab.html')}`);
 
     sendTabsToRenderer();
 });
