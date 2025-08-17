@@ -49,7 +49,7 @@ function App() {
         {/* This is the container we measure. */}
         <div className="webview-container" ref={webviewContainerRef}>
           {/* CONDITIONALLY RENDER the Welcome message. */}
-          {activeUrl === 'https://nova.browser.com/' && <MainContent />}
+          {activeUrl.startsWith('file://') && <MainContent />}
         </div>
         <ChatbotSidebar />
       </div>

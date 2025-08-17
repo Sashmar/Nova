@@ -1,6 +1,9 @@
 const { app, BrowserWindow, ipcMain, BrowserView } = require('electron');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+
+require('dotenv').config();
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 let mainWindow;
 let currentBrowserView = null; // To hold our single BrowserView for now
 let lastKnownBounds = null; // Store the last precise bounds received from React
@@ -214,21 +217,36 @@ function createWindow() {
 
 
     // --- IPC Main Listeners (These must be inside createWindow because they rely on mainWindow) ---
-    // ADD THIS ENTIRE BLOCK
     ipcMain.handle('summarize-page', async () => {
         if (!currentBrowserView) {
             return "There is no active page to summarize.";
         }
 
+        // 1. Initialize the Google AI client with your API key.
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        // 2. Specify the model we want to use.
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+
         const webContents = currentBrowserView.webContents;
 
         try {
+            // 3. Extract the text from the page, just like before.
             const pageText = await webContents.executeJavaScript('document.body.innerText');
 
-            return pageText;
+            // 4. Create the prompt for the AI.
+            const prompt = `Please provide a concise, easy-to-read summary of the following web page content. Focus on the key points and main ideas. Here is the content: "${pageText}"`;
+
+            // 5. Send the prompt to the model and wait for the result.
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const summary = response.text();
+
+            // 6. Return the AI's summary.
+            return summary;
+
         } catch (error) {
-            console.error("Failed to extract text from page:", error);
-            return "Sorry, I was unable to read the content of this page.";
+            console.error("Error during AI summarization:", error);
+            return "Sorry, an error occurred while summarizing the page.";
         }
     });
 
@@ -352,7 +370,7 @@ function createWindow() {
                 !tabToClose.browserView.webContents.isDestroyed()
             ) {
                 mainWindow.removeBrowserView(tabToClose.browserView);
-                tabToClose.browserView.destroy();
+                tabToClose.browserView.webContents.destroy();
                 console.log(`main.js: Destroyed BrowserView for tab ${tabIdToClose}`);
             } else {
                 console.warn(`main.js: Skipped destroying. browserView is not valid for tab ${tabIdToClose}`);

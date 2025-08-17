@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './BrowserHeader.css';
 import { IoIosArrowBack, IoIosArrowForward, IoMdRefresh, IoMdHome, IoMdList, IoMdLock, IoMdWarning } from 'react-icons/io';
-
+import { IoBriefcase } from "react-icons/io5";
 const hideBrowserView = () => {
     if (window.electron?.toggleBrowserViewVisibility) {
         window.electron.toggleBrowserViewVisibility(false);
@@ -133,6 +133,7 @@ function BrowserHeader({ onActiveTabChange }) {
     const [activeTabIdState, setActiveTabIdState] = useState(null); // State to hold the ID of the active tab
     const [addressBarValue, setAddressBarValue] = useState('https://nova.browser.com');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isWorkspaceMenuOpen, setIsWorkspaceMenuOpen] = useState(false);
 
     const handleDropdownToggle = () => {
         const newDropdownState = !isDropdownOpen;
@@ -154,6 +155,16 @@ function BrowserHeader({ onActiveTabChange }) {
         showBrowserView(); // Show web content again when dropdown is closed
     };
 
+    const handleWorkspaceMenuToggle = () => {
+        const newState = !isWorkspaceMenuOpen;
+        setIsWorkspaceMenuOpen(newState);
+
+        if (newState) {
+            hideBrowserView(); // hide page while menu is open
+        } else {
+            showBrowserView(); // show page again
+        }
+    };
 
     // --- END NEW REACT STATE ---
 
@@ -232,8 +243,8 @@ function BrowserHeader({ onActiveTabChange }) {
                     <button className="nav-button" onClick={handleReload}>
                         <IoMdRefresh />
                     </button>
-                    <button className="nav-button" onClick={handleGoHome}>
-                        <IoMdHome />
+                    <button className="nav-button" onClick={handleWorkspaceMenuToggle}>
+                        <IoBriefcase />
                     </button>
                     <button
                         className="nav-button tab-list-button"
@@ -284,7 +295,23 @@ function BrowserHeader({ onActiveTabChange }) {
                         onFocus={handleAddressBarFocus}
                     />
                 </div>
+                {isWorkspaceMenuOpen && (
+                    <div className="workspace-menu">
+                        <div className="workspace-item active">
+                            <span className="workspace-icon">💼</span>
+                            <span>Default Workspace</span>
+                        </div>
+                        <div className="workspace-item">
+                            <span className="workspace-icon">📚</span>
+                            <span>Project Research</span>
+                        </div>
+                        <div className="workspace-divider" />
+                        <div className="workspace-action">Create New Workspace</div>
+                    </div>
+                )}
             </header>
+
+
 
 
             {isDropdownOpen && (

@@ -206,7 +206,7 @@
 
 .tab-list-dropdown {
     position: absolute;
-    top: 65px;
+    top: 75px;
     /* Adjust this value based on your header's actual height */
     left: 20px;
     /* Adjust to align with the button */
@@ -340,4 +340,53 @@
 .security-icon.insecure {
     color: #ff5252;
     /* Red */
+}
+
+.workspace-menu {
+    position: absolute;
+    top: 75px;
+    /* Position below the header */
+    left: 175px;
+    /* Adjust to align with the new button */
+    width: 250px;
+    background-color: var(--nova-surface-light);
+    border-radius: var(--nova-border-radius-large);
+    box-shadow: var(--nova-shadow-medium);
+    z-index: 100;
+    padding: 8px;
+    border: 1px solid var(--nova-border-light);
+
+}
+
+.workspace-item,
+.workspace-action {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--nova-border-radius-small);
+    cursor: pointer;
+    font-size: 0.95em;
+    color: var(--nova-text-dark);
+}
+
+.workspace-item:hover,
+.workspace-action:hover {
+    background-color: var(--nova-background-light);
+}
+
+.workspace-item.active {
+    background-color: var(--nova-primary-color);
+    color: white;
+    font-weight: 500;
+}
+
+.workspace-icon {
+    font-size: 1.2em;
+}
+
+.workspace-divider {
+    height: 1px;
+    background-color: var(--nova-border-light);
+    margin: 8px 0;
 }
