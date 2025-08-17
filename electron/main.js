@@ -214,6 +214,23 @@ function createWindow() {
 
 
     // --- IPC Main Listeners (These must be inside createWindow because they rely on mainWindow) ---
+    // ADD THIS ENTIRE BLOCK
+    ipcMain.handle('summarize-page', async () => {
+        if (!currentBrowserView) {
+            return "There is no active page to summarize.";
+        }
+
+        const webContents = currentBrowserView.webContents;
+
+        try {
+            const pageText = await webContents.executeJavaScript('document.body.innerText');
+
+            return pageText;
+        } catch (error) {
+            console.error("Failed to extract text from page:", error);
+            return "Sorry, I was unable to read the content of this page.";
+        }
+    });
 
     // Listener 1: Receive precise bounds from React's MainContent.js
     ipcMain.on('set-webview-bounds', (event, bounds) => {
@@ -310,6 +327,7 @@ function createWindow() {
             console.warn('toggle-browser-view-visibility: No active tab or BrowserView found.');
         }
     });
+
 
 
 
