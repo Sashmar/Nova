@@ -20,6 +20,8 @@ function BrowserHeader({ onActiveTabChange }) {
 
     const [securityStatus, setSecurityStatus] = useState('secure');
     const dropdownRef = useRef(null);
+    const [workspaces, setWorkspaces] = useState([]);
+    const [activeWorkspaceId, setActiveWorkspaceId] = useState(null);
     // Function to handle when the user presses a key in the address bar
     const handleAddressBarKeyDown = (event) => {
         // Check if the pressed key is 'Enter'
@@ -81,6 +83,13 @@ function BrowserHeader({ onActiveTabChange }) {
             console.log('Requesting page reload.'); // Console log for debugging
         } else {
             console.error('window.electron.reload is not defined. Preload script issue?');
+        }
+    };
+
+    const handleCreateWorkspace = () => {
+        const newName = prompt("Enter a name for the new workspace:");
+        if (newName && window.electron?.createWorkspace) {
+            window.electron.createWorkspace(newName);
         }
     };
 
@@ -184,6 +193,17 @@ function BrowserHeader({ onActiveTabChange }) {
             }
         };
 
+        const fetchInitialWorkspaces = async () => {
+            if (window.electron?.getWorkspaces) {
+                const initialWorkspaces = await window.electron.getWorkspaces();
+                setWorkspaces(initialWorkspaces);
+                // Assuming the first one is active for now
+                if (initialWorkspaces.length > 0) {
+                    setActiveWorkspaceId(initialWorkspaces[0].id);
+                }
+            }
+        };
+
         const handleTabsUpdated = (tabsData) => {
             setTabsState(tabsData);
             const currentActive = tabsData.find(tab => tab.isActive);
@@ -196,6 +216,10 @@ function BrowserHeader({ onActiveTabChange }) {
                 onActiveTabChange('nova://newtab');
             }
             console.log('BrowserHeader: Tabs updated from main process:', tabsData);
+        };
+
+        const handleWorkspacesUpdated = (workspacesData) => {
+            setWorkspaces(workspacesData);
         };
 
         const handleAddressBarUpdate = (url) => {
@@ -211,8 +235,10 @@ function BrowserHeader({ onActiveTabChange }) {
         };
 
         fetchInitialTabs();
+        fetchInitialWorkspaces();
         if (window.electron) {
             window.electron.onTabsUpdated(handleTabsUpdated);
+            window.electron.onWorkspacesUpdated(handleWorkspacesUpdated);
             window.electron.onUpdateAddressBar(handleAddressBarUpdate);
         }
 
@@ -297,16 +323,16 @@ function BrowserHeader({ onActiveTabChange }) {
                 </div>
                 {isWorkspaceMenuOpen && (
                     <div className="workspace-menu">
-                        <div className="workspace-item active">
-                            <span className="workspace-icon">💼</span>
-                            <span>Default Workspace</span>
-                        </div>
-                        <div className="workspace-item">
-                            <span className="workspace-icon">📚</span>
-                            <span>Project Research</span>
-                        </div>
+                        {workspaces.map(ws => (
+                            <div key={ws.id} className={`workspace-item ${ws.id === activeWorkspaceId ? 'active' : ''}`}>
+                                <span className="workspace-icon">💼</span>
+                                <span>{ws.name}</span>
+                            </div>
+                        ))}
                         <div className="workspace-divider" />
-                        <div className="workspace-action">Create New Workspace</div>
+                        <div className="workspace-action" onClick={handleCreateWorkspace}>
+                            Create New Workspace
+                        </div>
                     </div>
                 )}
             </header>

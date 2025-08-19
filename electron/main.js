@@ -196,6 +196,16 @@ function sendTabsToRenderer() {
     }
 }
 
+function sendWorkspacesToRenderer() {
+    if (mainWindow && mainWindow.webContents) {
+        const workspaceList = Object.values(workspaces).map(ws => ({
+            id: ws.id,
+            name: ws.name
+        }));
+        mainWindow.webContents.send('workspaces-updated', workspaceList);
+    }
+}
+
 ipcMain.handle('get-tabs', async () => {
     console.log('Renderer requested tabs data.');
     const activeWorkspace = workspaces[activeWorkspaceId];
