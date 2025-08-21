@@ -390,3 +390,48 @@
     background-color: var(--nova-border-light);
     margin: 8px 0;
 }
+
+.ws-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.ws-modal {
+    background: var(--nova-surface-light, #fff);
+    padding: 16px 18px;
+    border-radius: 12px;
+    box-shadow: var(--nova-shadow-soft, 0 10px 30px rgba(0, 0, 0, 0.2));
+    min-width: 320px;
+}
+
+.ws-modal h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.05rem;
+}
+
+.ws-modal-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--nova-border-color, #ddd);
+    border-radius: 8px;
+    outline: none;
+}
+
+.ws-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.ws-modal-actions button {
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+}

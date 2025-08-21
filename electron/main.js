@@ -17,6 +17,8 @@ let workspaces = {
 let activeWorkspaceId = 'default-ws';
 let activeTabId = null; // To track the currently active tab
 
+
+
 // Helper function to set BrowserView bounds using the PRECISE bounds from React
 function setBrowserViewBounds(bounds) {
     if (!currentBrowserView || !mainWindow || !bounds) {
@@ -285,8 +287,22 @@ function createWindow() {
             name: name,
             tabs: []
         };
+        activeWorkspaceId = newId;
+
+        // Remove any current view
+        if (currentBrowserView) {
+            mainWindow.removeBrowserView(currentBrowserView);
+            currentBrowserView = null;
+            activeTabId = null;
+        }
+
+        // Open a fresh "New Tab" for this workspace
+        createAndActivateTab();
+
+
         // For now, we'll just create it. Switching will be a separate step.
         sendWorkspacesToRenderer(); // We'll create this function next.
+        sendTabsToRenderer();
     });
 
     // Listener 1: Receive precise bounds from React's MainContent.js
@@ -298,6 +314,38 @@ function createWindow() {
             // If BrowserView doesn't exist yet, just store the bounds for when it *does* get created
             lastKnownBounds = bounds;
             console.log('set-webview-bounds: BrowserView not yet created, storing bounds for later.');
+        }
+    });
+
+    ipcMain.on('switch-workspace', (event, workspaceId) => {
+        // 1. Check if the workspace exists and isn't already active.
+        if (workspaces[workspaceId] && activeWorkspaceId !== workspaceId) {
+
+            // 2. Remove the old BrowserView before switching.
+            if (currentBrowserView) {
+                mainWindow.removeBrowserView(currentBrowserView);
+            }
+
+            // 3. Update the active workspace ID. THIS IS THE KEY STEP.
+            activeWorkspaceId = workspaceId;
+
+            // 4. Find the active tab in the new workspace (or the first tab).
+            const activeWorkspace = workspaces[activeWorkspaceId];
+            const activeTab = activeWorkspace.tabs.find(tab => tab.isActive) || activeWorkspace.tabs[0];
+
+            // 5. Activate a tab in the new workspace.
+            if (activeTab) {
+                // If the new workspace has tabs, activate the correct one.
+                activateTab(activeTab.id);
+            } else {
+                // If it's an empty workspace, create a new default tab.
+                currentBrowserView = null;
+                createAndActivateTab();
+            }
+
+            // 6. Update the UI with the new workspace and tab lists.
+            sendTabsToRenderer();
+            sendWorkspacesToRenderer();
         }
     });
 
@@ -466,6 +514,8 @@ app.whenReady().then(() => {
     createAndActivateTab(`file://${path.join(__dirname, 'new-tab.html')}`);
 
     sendTabsToRenderer();
+
+
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common

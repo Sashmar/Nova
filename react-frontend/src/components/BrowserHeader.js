@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+
 import './BrowserHeader.css';
 import { IoIosArrowBack, IoIosArrowForward, IoMdRefresh, IoMdHome, IoMdList, IoMdLock, IoMdWarning } from 'react-icons/io';
 import { IoBriefcase } from "react-icons/io5";
@@ -20,8 +21,22 @@ function BrowserHeader({ onActiveTabChange }) {
 
     const [securityStatus, setSecurityStatus] = useState('secure');
     const dropdownRef = useRef(null);
+    const workspaceMenuRef = useRef(null);
     const [workspaces, setWorkspaces] = useState([]);
     const [activeWorkspaceId, setActiveWorkspaceId] = useState(null);
+
+    const [isWsPromptOpen, setIsWsPromptOpen] = useState(false);
+    const [wsName, setWsName] = useState('');
+    const wsInputRef = useRef(null);
+
+    useEffect(() => {
+        if (isWsPromptOpen) {
+            hideBrowserView();
+            setTimeout(() => wsInputRef.current?.focus(), 0);
+        } else {
+            showBrowserView();
+        }
+    }, [isWsPromptOpen]);
     // Function to handle when the user presses a key in the address bar
     const handleAddressBarKeyDown = (event) => {
         // Check if the pressed key is 'Enter'
@@ -87,16 +102,36 @@ function BrowserHeader({ onActiveTabChange }) {
     };
 
     const handleCreateWorkspace = () => {
-        const newName = prompt("Enter a name for the new workspace:");
-        if (newName && window.electron?.createWorkspace) {
-            window.electron.createWorkspace(newName);
+        setIsWsPromptOpen(true); // open the modal
+    };
+
+    const confirmCreateWorkspace = () => {
+        const name = wsName.trim();
+        if (!name) {
+            setIsWsPromptOpen(false);
+            setWsName('');
+            return;
+        }
+        window.electron?.createWorkspace?.(name);
+        setIsWsPromptOpen(false);
+        setWsName('');
+    };
+
+    const cancelCreateWorkspace = () => {
+        setIsWsPromptOpen(false);
+        setWsName('');
+    };
+    const handleSwitchWorkspace = (id) => {
+        if (window.electron?.switchWorkspace) {
+            window.electron.switchWorkspace(id);
+            setIsWorkspaceMenuOpen(false); // Close the menu after switching
         }
     };
 
     const handleNewTabClick = () => {
         if (window.electron && window.electron.createNewTab) {
             // Tell Electron to create a new tab, loading a default page
-            window.electron.createNewTab('https://nova.browser.com'); // Or 'about:blank' for a truly blank page
+            window.electron.createNewTab();
             console.log('BrowserHeader: Requesting new tab.');
         } else {
             console.error('window.electron.createNewTab is not defined. Preload script issue?');
@@ -220,6 +255,10 @@ function BrowserHeader({ onActiveTabChange }) {
 
         const handleWorkspacesUpdated = (workspacesData) => {
             setWorkspaces(workspacesData);
+
+            if (workspacesData.length > 0 && !workspacesData.find(ws => ws.id === activeWorkspaceId)) {
+                setActiveWorkspaceId(workspacesData[0].id);
+            }
         };
 
         const handleAddressBarUpdate = (url) => {
@@ -228,8 +267,14 @@ function BrowserHeader({ onActiveTabChange }) {
         };
 
         const handleClickOutside = (event) => {
+            // Check for tab dropdown
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsDropdownOpen(false);
+                showBrowserView();
+            }
+            // Check for workspace menu
+            if (workspaceMenuRef.current && !workspaceMenuRef.current.contains(event.target)) {
+                setIsWorkspaceMenuOpen(false);
                 showBrowserView();
             }
         };
@@ -322,9 +367,9 @@ function BrowserHeader({ onActiveTabChange }) {
                     />
                 </div>
                 {isWorkspaceMenuOpen && (
-                    <div className="workspace-menu">
+                    <div className="workspace-menu" ref={workspaceMenuRef}>
                         {workspaces.map(ws => (
-                            <div key={ws.id} className={`workspace-item ${ws.id === activeWorkspaceId ? 'active' : ''}`}>
+                            <div key={ws.id} className={`workspace-item ${ws.id === activeWorkspaceId ? 'active' : ''}`} onClick={() => handleSwitchWorkspace(ws.id)}>
                                 <span className="workspace-icon">💼</span>
                                 <span>{ws.name}</span>
                             </div>
@@ -357,6 +402,36 @@ function BrowserHeader({ onActiveTabChange }) {
                             </button>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {isWsPromptOpen && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                    <div className="bg-white rounded-xl shadow-lg p-6 w-80">
+                        <h2 className="text-lg font-semibold mb-4">Enter a name for the new workspace:</h2>
+                        <input
+                            ref={wsInputRef}
+                            type="text"
+                            value={wsName}
+                            onChange={(e) => setWsName(e.target.value)}
+                            className="w-full border border-gray-300 rounded p-2 mb-4"
+                            placeholder="e.g. Work, Project X"
+                        />
+                        <div className="flex justify-end gap-2">
+                            <button
+                                onClick={() => setIsWsPromptOpen(false)}
+                                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmCreateWorkspace} // <-- CORRECT
+                                className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                            >
+                                Create
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 

@@ -15,8 +15,7 @@ contextBridge.exposeInMainWorld('electron', {
     goHome: () => ipcRenderer.send('go-home'),
     getWorkspaces: () => ipcRenderer.invoke('get-workspaces'),
     createWorkspace: (name) => ipcRenderer.send('create-workspace', name),
-    getWorkspaces: () => ipcRenderer.invoke('get-workspaces'),
-    createWorkspace: (name) => ipcRenderer.send('create-workspace', name),
+    switchWorkspace: (id) => ipcRenderer.send('switch-workspace', id),
     onWorkspacesUpdated: (callback) => ipcRenderer.on('workspaces-updated', (event, workspaces) => callback(workspaces)),
     toggleBrowserViewVisibility: (isVisible) => ipcRenderer.send('toggle-browser-view-visibility', isVisible),
     onUpdateAddressBar: (callback) => {
