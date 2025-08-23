@@ -124,6 +124,7 @@ function BrowserHeader({ onActiveTabChange }) {
     const handleSwitchWorkspace = (id) => {
         if (window.electron?.switchWorkspace) {
             window.electron.switchWorkspace(id);
+            setActiveWorkspaceId(id);
             setIsWorkspaceMenuOpen(false); // Close the menu after switching
         }
     };
@@ -256,7 +257,11 @@ function BrowserHeader({ onActiveTabChange }) {
         const handleWorkspacesUpdated = (workspacesData) => {
             setWorkspaces(workspacesData);
 
-            if (workspacesData.length > 0 && !workspacesData.find(ws => ws.id === activeWorkspaceId)) {
+            const active = workspacesData.find(ws => ws.active);
+            if (active) {
+                setActiveWorkspaceId(active.id);
+            } else if (workspacesData.length > 0 && !workspacesData.find(ws => ws.id === activeWorkspaceId)) {
+                // fallback to first if nothing marked active
                 setActiveWorkspaceId(workspacesData[0].id);
             }
         };

@@ -202,9 +202,13 @@ function sendWorkspacesToRenderer() {
     if (mainWindow && mainWindow.webContents) {
         const workspaceList = Object.values(workspaces).map(ws => ({
             id: ws.id,
-            name: ws.name
+            name: ws.name,
+            active: ws.id === activeWorkspaceId, // <-- add active flag
         }));
         mainWindow.webContents.send('workspaces-updated', workspaceList);
+
+        // (Optional, but nice to have if you later listen for it in the renderer)
+        mainWindow.webContents.send('active-workspace-changed', activeWorkspaceId);
     }
 }
 
@@ -276,7 +280,11 @@ function createWindow() {
     });
 
     ipcMain.handle('get-workspaces', async () => {
-        return Object.values(workspaces).map(ws => ({ id: ws.id, name: ws.name }));
+        return Object.values(workspaces).map(ws => ({
+            id: ws.id,
+            name: ws.name,
+            active: ws.id === activeWorkspaceId, // <-- add active flag
+        }));
     });
 
     // ADD THIS BLOCK
