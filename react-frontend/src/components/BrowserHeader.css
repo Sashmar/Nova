@@ -435,3 +435,108 @@
     border: none;
     cursor: pointer;
 }
+
+.create-workspace-panel {
+    position: absolute;
+    top: 65px;
+    left: 435px;
+    /* Position it to the right of the menu */
+    z-index: 1000;
+    background-color: var(--nova-surface-light);
+    border-radius: var(--nova-border-radius-large);
+    box-shadow: var(--nova-shadow-medium);
+    padding: 12px;
+    border: 1px solid var(--nova-border-light);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* --- Workspace Modal (Nova styled) --- */
+.ws-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    /* above header and content */
+}
+
+.ws-card {
+    background: var(--nova-surface-light);
+    border-radius: var(--nova-border-radius-large);
+    box-shadow: var(--nova-shadow-medium);
+    padding: 24px;
+    width: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.ws-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--nova-text-dark);
+}
+
+.ws-input {
+    width: 90%;
+    margin: 0 auto;
+    border: 1px solid var(--nova-border-light);
+    border-radius: var(--nova-border-radius-medium);
+    padding: 10px 12px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+    color: var(--nova-text-dark);
+    background: var(--nova-surface-light);
+}
+
+.ws-input:focus {
+    border-color: var(--nova-primary-color);
+    box-shadow: 0 0 0 3px rgba(108, 71, 215, 0.15);
+    /* primary w/ opacity */
+}
+
+.ws-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btn {
+    border: none;
+    border-radius: var(--nova-border-radius-medium);
+    padding: 10px 18px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 120ms ease, background-color 120ms ease, opacity 120ms ease;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Secondary = neutral background */
+.btn-secondary {
+    background: #E9ECEF;
+    color: var(--nova-text-dark);
+}
+
+.btn-secondary:hover {
+    filter: brightness(0.97);
+}
+
+/* Primary = Nova purple */
+.btn-primary {
+    background: var(--nova-primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    filter: brightness(0.97);
+}

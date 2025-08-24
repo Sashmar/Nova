@@ -22,12 +22,15 @@ function BrowserHeader({ onActiveTabChange }) {
     const [securityStatus, setSecurityStatus] = useState('secure');
     const dropdownRef = useRef(null);
     const workspaceMenuRef = useRef(null);
+    const createWorkspacePanelRef = useRef(null);
     const [workspaces, setWorkspaces] = useState([]);
     const [activeWorkspaceId, setActiveWorkspaceId] = useState(null);
+
 
     const [isWsPromptOpen, setIsWsPromptOpen] = useState(false);
     const [wsName, setWsName] = useState('');
     const wsInputRef = useRef(null);
+
 
     useEffect(() => {
         if (isWsPromptOpen) {
@@ -103,6 +106,7 @@ function BrowserHeader({ onActiveTabChange }) {
 
     const handleCreateWorkspace = () => {
         setIsWsPromptOpen(true); // open the modal
+        hideBrowserView();   // <--- Hide content so it doesn’t overlap
     };
 
     const confirmCreateWorkspace = () => {
@@ -110,16 +114,19 @@ function BrowserHeader({ onActiveTabChange }) {
         if (!name) {
             setIsWsPromptOpen(false);
             setWsName('');
+            showBrowserView(); // Also show the browser view again
             return;
         }
         window.electron?.createWorkspace?.(name);
         setIsWsPromptOpen(false);
         setWsName('');
+        showBrowserView(); // Also show the browser view again
     };
 
     const cancelCreateWorkspace = () => {
         setIsWsPromptOpen(false);
         setWsName('');
+        showBrowserView(); // Also show the browser view again
     };
     const handleSwitchWorkspace = (id) => {
         if (window.electron?.switchWorkspace) {
@@ -282,6 +289,15 @@ function BrowserHeader({ onActiveTabChange }) {
                 setIsWorkspaceMenuOpen(false);
                 showBrowserView();
             }
+
+            if (
+                isWsPromptOpen &&
+                createWorkspacePanelRef.current &&
+                !createWorkspacePanelRef.current.contains(event.target)
+            ) {
+                cancelCreateWorkspace();
+            }
+
         };
 
         fetchInitialTabs();
@@ -374,18 +390,26 @@ function BrowserHeader({ onActiveTabChange }) {
                 {isWorkspaceMenuOpen && (
                     <div className="workspace-menu" ref={workspaceMenuRef}>
                         {workspaces.map(ws => (
-                            <div key={ws.id} className={`workspace-item ${ws.id === activeWorkspaceId ? 'active' : ''}`} onClick={() => handleSwitchWorkspace(ws.id)}>
+                            <div key={ws.id} className={`workspace-item ${ws.active ? 'active' : ''}`} onClick={() => handleSwitchWorkspace(ws.id)}>
                                 <span className="workspace-icon">💼</span>
                                 <span>{ws.name}</span>
                             </div>
                         ))}
                         <div className="workspace-divider" />
-                        <div className="workspace-action" onClick={handleCreateWorkspace}>
+                        {/* The onClick now just shows the separate panel */}
+                        <div className="workspace-action"
+                            onClick={() => {
+                                handleCreateWorkspace();
+                            }}>
                             Create New Workspace
                         </div>
+
                     </div>
-                )}
-            </header>
+                )
+                }
+
+
+            </header >
 
 
 
@@ -411,27 +435,29 @@ function BrowserHeader({ onActiveTabChange }) {
             )}
 
             {isWsPromptOpen && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                    <div className="bg-white rounded-xl shadow-lg p-6 w-80">
-                        <h2 className="text-lg font-semibold mb-4">Enter a name for the new workspace:</h2>
+                <div className="ws-overlay">
+                    <div className="ws-card" ref={createWorkspacePanelRef} onClick={(e) => e.stopPropagation()}>
+                        <div className="ws-title">Enter a name for a new workspace:</div>
                         <input
                             ref={wsInputRef}
                             type="text"
                             value={wsName}
                             onChange={(e) => setWsName(e.target.value)}
-                            className="w-full border border-gray-300 rounded p-2 mb-4"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') confirmCreateWorkspace();
+                                if (e.key === 'Escape') cancelCreateWorkspace();
+                            }}
+                            className="ws-input"
                             placeholder="e.g. Work, Project X"
                         />
-                        <div className="flex justify-end gap-2">
-                            <button
-                                onClick={() => setIsWsPromptOpen(false)}
-                                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
-                            >
+                        <div className="ws-actions">
+                            <button className="btn btn-secondary" onClick={cancelCreateWorkspace}>
                                 Cancel
                             </button>
                             <button
-                                onClick={confirmCreateWorkspace} // <-- CORRECT
-                                className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                                className="btn btn-primary"
+                                onClick={confirmCreateWorkspace}
+                                disabled={!wsName.trim()}
                             >
                                 Create
                             </button>
@@ -440,7 +466,8 @@ function BrowserHeader({ onActiveTabChange }) {
                 </div>
             )}
 
-        </div>
+
+        </div >
     );
 }
 
